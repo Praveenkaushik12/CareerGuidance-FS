@@ -1,0 +1,48 @@
+
+.MainDiv{
+  font-family: var(--fontHeading);
+}
+.CounsellorsHeading {
+  font-weight: bold;
+  color: azure;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+.image {
+  width:100%;
+  box-shadow: 2px 5px 10px 0px var(--blue);
+  border:1px solid black;
+}
+.starsFilled{
+  color:var(--purple);
+  font-size:20px; 
+}
+.ChatButton {
+  font-weight: bold;
+  padding: 10px;
+  border: 2px solid var(--blue);
+  border-radius: 5px;
+  text-decoration: none;
+  background-color: var(--blue);
+  color: azure;
+  box-shadow: 2px 2px 4px var(--lavender);
+}
+.CounsellorCard {
+  border-radius: 20px;
+  border-color: 1px solid var(--blue);
+  box-shadow: 2px 2px 4px var(--lavender);
+}
+.mainHR {
+  border-top: 3px solid #050a32;
+  width: 100%;
+}
+@media (max-width:765px)
+{
+  .image {
+    width:50%;
+    box-shadow: 0px 0px 10px 0px var(--blue);
+    border:1px solid black;
+  }
+  .CounsellorsHeading{
+    font-size:20px;
+  }
+}

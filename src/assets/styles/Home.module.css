@@ -1,0 +1,26 @@
+.openButton{
+    position: fixed;
+    bottom: 30px;
+    right: 40px;
+    border-radius: 100%;
+    border: none;
+    box-shadow: 2px 4px 4px var(--purple);
+    background-color: #81689D;
+    animation: danceButton 1s infinite alternate;
+    padding: 5px;
+    text-align: center;
+}
+
+@keyframes danceButton {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(25px, -25px);
+    }
+}
+
+.botIcon{
+    height: 55px;
+    width: 55px;
+}
