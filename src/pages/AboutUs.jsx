@@ -39,7 +39,7 @@ export default function AboutUs(){
                             <div className={`${AboutUsCSS.face} ${AboutUsCSS.frontFace}`}>
                                 <img src={Team1} alt="TeamMember1" className={AboutUsCSS.profile} />
                                 <div className={`mt-3 text-uppercase ${AboutUsCSS.name}`}>
-                                    Ramsha Farrukh
+                                    Muskan Chaudhary
                                 </div>
                                 <div className={AboutUsCSS.designation}>Team Leader</div>
                             </div>
@@ -61,7 +61,7 @@ export default function AboutUs(){
                             <div className={`${AboutUsCSS.face} ${AboutUsCSS.frontFace}`}>
                                 <img src={Team2} alt="TeamMember1" className={AboutUsCSS.profile} />
                                 <div className={`mt-3 text-uppercase ${AboutUsCSS.name}`}>
-                                    Laiba Tariq
+                                    Aditi Singh
                                 </div>
                                 <div className={AboutUsCSS.designation}>Web Developer</div>
                             </div>
@@ -83,7 +83,7 @@ export default function AboutUs(){
                             <div className={`${AboutUsCSS.face} ${AboutUsCSS.frontFace}`}>
                                 <img src={Team3} alt="TeamMember1" className={AboutUsCSS.profile} />
                                 <div className={`mt-3 text-uppercase ${AboutUsCSS.name}`}>
-                                    Mehak Nadeem
+                                    PraVeen Kaushik
                                 </div>
                                 <div className={AboutUsCSS.designation}>Web Developer</div>
                             </div>
@@ -105,7 +105,7 @@ export default function AboutUs(){
                             <div className={`${AboutUsCSS.face} ${AboutUsCSS.frontFace}`}>
                                 <img src={Team4} alt="TeamMember1" className={AboutUsCSS.profile} />
                                 <div className={`mt-3 text-uppercase ${AboutUsCSS.name}`}>
-                                    Hira Khan
+                                    Piyush Varshney
                                 </div>
                                 <div className={AboutUsCSS.designation}>Web Developer</div>
                             </div>
