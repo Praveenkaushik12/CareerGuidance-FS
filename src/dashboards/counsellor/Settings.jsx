@@ -91,7 +91,7 @@ export default function Settings() {
                         className={SettingsCSS.formControl}
                         placeholder="Phone Number"
                         pattern="\+\d{1,4}-\d{1,10}"
-                        title="Enter a valid phone number in the format: +92-number (e.g., +92-123456789)"
+                        title="Enter a valid phone number in the format: +91-number (e.g., +91-9876543210)"
                         name="phoneNo"
                         value={settings.phoneNo}
                         onChange={(event) => {
@@ -100,7 +100,7 @@ export default function Settings() {
                             dispatch(
                               handleChange({
                                 name: event.target.name,
-                                value: `+92-${limitedNumber}`,
+                                value: `+91-${limitedNumber}`,
                               })
                             )
                         }}

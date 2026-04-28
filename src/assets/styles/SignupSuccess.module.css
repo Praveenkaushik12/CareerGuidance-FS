@@ -1,27 +1,41 @@
 
+.page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 60%, var(--black) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .thanksContainer {
     text-align: center;
     font-family: var(--fontHeading);
-    color: white;
     width: 80%;
-    margin: auto;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    max-width: 560px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 56px 40px;
+    backdrop-filter: blur(8px);
 }
 
-.thanksHeading{
-    color: white;
-    text-shadow:  1px 1px 2px violet;
+.thanksHeading {
+    color: var(--yellow);
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 12px rgba(253,216,53,0.3);
 }
 
-.checkMark{
+.checkMark {
     width: 100px;
     height: 100px;
+    margin-bottom: 24px;
 }
 
-.thanksParagraph{
-    color: white;
-    font-size: 20px;  
+.thanksParagraph {
+    color: rgba(255,255,255,0.88);
+    font-size: 18px;
+    line-height: 1.7;
 }

@@ -99,3 +99,10 @@
 .errorMsg{
     color: red;
 }
+
+/* ── Dark mode ── */
+[data-theme="dark"] .heading { color: var(--yellow); }
+[data-theme="dark"] .formControl {
+  color: #e8eaf6;
+  border-bottom-color: #3949ab;
+}

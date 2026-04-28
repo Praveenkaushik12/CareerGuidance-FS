@@ -12,6 +12,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 60%, var(--black) 100%);
   }
   .emailExist{
     color:red
@@ -44,15 +45,27 @@
     padding: 50px 60px 40px;
     background: #fff;
     box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
+    transition: background 0.3s;
   }
+
+  [data-theme="dark"] .form {
+    background: #1a1a2e;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
+
+  [data-theme="dark"] .signupHeading { color: var(--yellow); }
+  [data-theme="dark"] .formControl { color: #e8eaf6; border-bottom-color: #3949ab; }
+  [data-theme="dark"] .accountExist { color: #b0b8d8; }
+  [data-theme="dark"] .accountExist a { color: var(--yellow); }
   
   .signupHeading {
     text-transform: uppercase;
-    font-size: 40px;
+    font-size: 36px;
     font-family: var(--fontHeading);
     letter-spacing: 3px;
     text-align: center;
     margin-bottom: 33px;
+    color: var(--blue);
   }
   
   .formHolder {
@@ -106,7 +119,7 @@
     align-items: center;
     justify-content: center;
     padding: 0;
-    background: var(--blue);
+    background: linear-gradient(135deg, var(--blue), var(--purple));
     color: white;
     text-transform: uppercase;
     font-family: var(--fontHeading);
@@ -184,7 +197,7 @@
     }
   
     .wrapper {
-      background: none;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
     }
   }
   

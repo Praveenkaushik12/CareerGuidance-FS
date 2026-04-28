@@ -1,27 +1,76 @@
 import HeroCSS from "../assets/styles/Hero.module.css"
 import heroImage from "../assets/images/Hero_main.png"
-import robot from "../assets/images/Hero_robot.svg"
 import { Link } from "react-router-dom"
 
-export default function Hero(){
+export default function Hero() {
     return (
-        <div className={HeroCSS.hero}>
-            <section className={`card ${HeroCSS.card} mt-5`}>
-                <div className={`row no-gutters ${HeroCSS.card__row}`}>
-                    <div className={`col-md-6 ${HeroCSS.card__col}`}>
-                        <div className={`card__image ${HeroCSS.cardImage} mt-5`}>
-                            <img src={heroImage} alt="Career Guidance" className={`img-fluid ${HeroCSS.card__image_img}`} />
-                        </div>
+        <section className={HeroCSS.hero}>
+            <div className={HeroCSS.heroInner}>
+                {/* Left: text content */}
+                <div className={HeroCSS.heroText}>
+                    <span className={HeroCSS.heroBadge}>
+                        <i className="fa-solid fa-bolt"></i> AI-Powered Career Guidance
+                    </span>
+                    <h1 className={HeroCSS.heroTitle}>
+                        Find Your <span className={HeroCSS.highlight}>Dream Career</span><br />
+                        with Expert Guidance
+                    </h1>
+                    <p className={HeroCSS.heroDesc}>
+                        CareerGuidance connects students with verified career counsellors and
+                        AI-powered tools to help them discover the right career path based on
+                        their interests, strengths, and academic background.
+                    </p>
+                    <div className={HeroCSS.heroCtas}>
+                        <Link to="careerGPT" className={HeroCSS.btnPrimary}>
+                            <i className="fa-solid fa-robot"></i> Chat with CareerGPT
+                        </Link>
+                        <Link to="askCounsellor" className={HeroCSS.btnSecondary}>
+                            <i className="fa-solid fa-user-tie"></i> Find a Counsellor
+                        </Link>
                     </div>
-                    <div className={`col-md-6 ${HeroCSS.card__col}`}>
-                        <div className={`card__content ${HeroCSS.card__content}`}>
-                            <h1 className={`card-title ${HeroCSS.cardTitle} mt-4`}>CareerGuidance</h1>
-                            <p className={`card-text ${HeroCSS.cardText}`}>CareerGuidance is one of the kind career counseling system of Pakistan to facilitate youth and students in determining their career path and relevant education based on their personality.</p>
-                            <Link to="careerGPT" className={`btn ${HeroCSS.chatButton}`}>Chat with CareerGPT <span><img src={robot} className={`${HeroCSS.robot} mb-2`} /></span></Link>
+                    <div className={HeroCSS.heroStats}>
+                        <div className={HeroCSS.stat}>
+                            <span className={HeroCSS.statNum}>500+</span>
+                            <span className={HeroCSS.statLabel}>Students Guided</span>
+                        </div>
+                        <div className={HeroCSS.statDivider} />
+                        <div className={HeroCSS.stat}>
+                            <span className={HeroCSS.statNum}>50+</span>
+                            <span className={HeroCSS.statLabel}>Expert Counsellors</span>
+                        </div>
+                        <div className={HeroCSS.statDivider} />
+                        <div className={HeroCSS.stat}>
+                            <span className={HeroCSS.statNum}>Free</span>
+                            <span className={HeroCSS.statLabel}>AI Assessment</span>
                         </div>
                     </div>
                 </div>
-            </section>
-        </div>
+
+                {/* Right: image + floating chips */}
+                <div className={HeroCSS.heroVisual}>
+                    <div className={HeroCSS.imageWrap}>
+                        <img src={heroImage} alt="Career Guidance" className={HeroCSS.heroImg} />
+                        <div className={HeroCSS.floatCard} style={{ top: "12%", right: "-18px" }}>
+                            <i className="fa-solid fa-star" style={{ color: "var(--yellow)" }}></i>
+                            <span>Top Rated Counsellors</span>
+                        </div>
+                        <div className={HeroCSS.floatCard} style={{ bottom: "18%", left: "-18px" }}>
+                            <i className="fa-solid fa-brain" style={{ color: "var(--purple)" }}></i>
+                            <span>AI Career Match</span>
+                        </div>
+                        <div className={HeroCSS.floatBadge}>
+                            <i className="fa-solid fa-shield-halved"></i> Verified Experts
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Wave separator */}
+            <div className={HeroCSS.wave}>
+                <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#ffffff" />
+                </svg>
+            </div>
+        </section>
     )
 }

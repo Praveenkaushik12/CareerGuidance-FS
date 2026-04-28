@@ -31,6 +31,9 @@ urlpatterns = [
     # CareerGPT History
     path('saveHistory', views.saveHistory, name='saveHistory'),
     path('getHistory', views.getHistory, name='getHistory'),
+    # Career Assessment
+    path('generateAssessmentQuestions', views.generateAssessmentQuestions, name='generateAssessmentQuestions'),
+    path('assessCareer', views.assessCareer, name='assessCareer'),
 
     # Counsellor Dashboard 
     path('getCounsellorData', views.getCounsellorData, name='getCounsellorData'),

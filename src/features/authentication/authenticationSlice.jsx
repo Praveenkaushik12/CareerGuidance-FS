@@ -9,7 +9,11 @@ const initialState = {
     role: null,
     is_exist: null,
     counsellor_approved: false,
-    isLoading: true
+    isLoading: true,
+    school: null,
+    stream: null,
+    age: null,
+    gender: null,
 }
 
 export const authenticate = createAsyncThunk('authenticate/getSessionData', async() => {
@@ -50,6 +54,10 @@ const authenticationSlice = createSlice({
                 state.is_exist = action.payload.is_exist
                 state.role = action.payload.role
                 state.counsellor_approved = action.payload.counsellor_approved
+                state.school = action.payload.school ?? null
+                state.stream = action.payload.stream ?? null
+                state.age    = action.payload.age    ?? null
+                state.gender = action.payload.gender ?? null
             })
             .addCase(authenticate.rejected, (state, action) => {
                 //console.log("authenticate rejected")
@@ -64,6 +72,10 @@ const authenticationSlice = createSlice({
                 state.role = null
                 state.is_exist = null
                 state.counsellor_approved = false
+                state.school = null
+                state.stream = null
+                state.age    = null
+                state.gender = null
             })
             .addCase(logout.rejected, (state, action) => {
                 //console.log("logout rejected")

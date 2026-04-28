@@ -16,3 +16,7 @@
     font-family: var(--fontHeading);
     background-color: linear-gradient(to right, var(--blue), var(--lightPink))
 }
+
+/* ── Dark mode ── */
+[data-theme="dark"] .peronsalDetails { color: var(--yellow); }
+[data-theme="dark"] .profileSection { background: #1a1a2e; }

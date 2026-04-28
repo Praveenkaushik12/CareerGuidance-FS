@@ -15,8 +15,16 @@
 .dashboardItem i {
   font-size: 3rem;
   margin-bottom: 10px;
-  color: #44156cb5; /* Icon color */
+  color: #44156cb5;
 }
+
+/* ── Dark mode ── */
+[data-theme="dark"] .dashboardItem {
+  background: #1a1a2e;
+  color: #e8eaf6;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+[data-theme="dark"] .dashboardItem i { color: var(--yellow); }
 
 
 

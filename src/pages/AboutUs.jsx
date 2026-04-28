@@ -11,7 +11,7 @@ import Team4 from "../assets/images/AboutUs_Team4.jpeg"
 
 export default function AboutUs(){
     return (
-        <>
+        <div className={AboutUsCSS.pageBg}>
             <div className={`p-5 mt-5 ${AboutUsCSS.aboutContainer}`}>
                 <div className="d-flex flex-row justify-content-center row">
                     <div className="col-md-6 m-auto">
@@ -167,6 +167,6 @@ export default function AboutUs(){
                     </div>     
                 </div>
             </div>
-        </>
+        </div>
     )
 }

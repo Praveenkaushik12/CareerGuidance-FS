@@ -142,3 +142,7 @@
   padding: 28px 32px;
   overflow-y: auto;
 }
+
+/* ── Dark mode ── */
+[data-theme="dark"] .body { background: #0f0f1a; }
+[data-theme="dark"] .content { background: #0f0f1a; color: #e8eaf6; }

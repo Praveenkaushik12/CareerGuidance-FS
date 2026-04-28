@@ -53,40 +53,47 @@ export default function OfferCounselling(){
   // ── Early returns AFTER all hooks ──
 
   if (authRole === null) {
-    // Still loading auth state
-    return <div style={{ textAlign: 'center', padding: '80px 20px', color: '#888' }}>Loading…</div>
+    return (
+      <div className={OfferCounsellingCSS.pageWrapper}>
+        <div className={OfferCounsellingCSS.statusPage}>
+          <p>Loading…</p>
+        </div>
+      </div>
+    )
   }
 
   if (authRole === 'B' && !counsellor_approved) {
     return (
-      <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-        <h2>Request Under Review</h2>
-        <p style={{ color: '#555', fontSize: '18px', marginTop: '16px' }}>
-          Your counsellor application has been submitted successfully.<br />
-          Please wait for admin approval. You will receive an email once reviewed.
-        </p>
+      <div className={OfferCounsellingCSS.pageWrapper}>
+        <div className={OfferCounsellingCSS.statusPage}>
+          <h2>Request Under Review</h2>
+          <p>
+            Your counsellor application has been submitted successfully.<br />
+            Please wait for admin approval. You will receive an email once reviewed.
+          </p>
+        </div>
       </div>
     )
   }
 
   if (authRole === 'B' && counsellor_approved) {
     return (
-      <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-        <h2>You are already a Counsellor</h2>
-        <p style={{ color: '#555', fontSize: '18px', marginTop: '16px' }}>
-          Your counsellor account is active. Visit your dashboard to manage your profile.
-        </p>
+      <div className={OfferCounsellingCSS.pageWrapper}>
+        <div className={OfferCounsellingCSS.statusPage}>
+          <h2>You are already a Counsellor</h2>
+          <p>Your counsellor account is active. Visit your dashboard to manage your profile.</p>
+        </div>
       </div>
     )
   }
 
   if (authRole === 'C') {
     return (
-      <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-        <h2>You are already a Counsellor</h2>
-        <p style={{ color: '#555', fontSize: '18px', marginTop: '16px' }}>
-          Your counsellor account is active. Visit your dashboard to manage your profile.
-        </p>
+      <div className={OfferCounsellingCSS.pageWrapper}>
+        <div className={OfferCounsellingCSS.statusPage}>
+          <h2>You are already a Counsellor</h2>
+          <p>Your counsellor account is active. Visit your dashboard to manage your profile.</p>
+        </div>
       </div>
     )
   }
@@ -112,8 +119,8 @@ export default function OfferCounselling(){
   }
 
   return (
-    <> 
-    {showModel && ( 
+    <div className={OfferCounsellingCSS.pageWrapper}>
+    {showModel && (
       <>
       <button
          type="button" 
@@ -133,12 +140,16 @@ export default function OfferCounselling(){
             <div className="modal-body">
               <h5 className={OfferCounsellingCSS.modelLabels}>Instructions:</h5>
               <p className={OfferCounsellingCSS.modelContent}>
-              Once the form is filled out, after verification from the admin side, you will receive an email. This email will confirm that the admin has verified your details.
-              Additionally, at the end of the process, your email will be further verified through an OTP sent to your mailbox.
+                Fill out all three steps of this form — personal details, qualification, and work experience.
+                Once submitted, your application will be reviewed by our admin team. You will receive a confirmation
+                email once your profile has been verified and approved. Your email address will also be verified
+                via a One-Time Password (OTP) sent to your inbox.
               </p>
               <h5 className={OfferCounsellingCSS.modelLabels}>Eligibility Criteria:</h5>
               <p className={OfferCounsellingCSS.modelContent}>
-              The maximum qualification required to act as a counsellor on our website is a master's degree (M.Phil) or a PhD.
+                To register as a counsellor, you must hold a recognised postgraduate qualification — a Master's
+                degree, M.Phil, or PhD — in a relevant field. You must also have demonstrable professional or
+                academic experience that enables you to guide students in their career decisions.
               </p>
             </div>
             <div className="modal-footer">
@@ -196,16 +207,16 @@ export default function OfferCounselling(){
             type="tel"
             name="phoneNo"
             required
-            placeholder="Phone number after +92- (e.g., 123456789)"
+            placeholder="Phone number after +91- (e.g., 9876543210)"
             pattern="\+\d{1,4}-\d{1,10}"
-            title="Enter a valid phone number in the format: +92-number (e.g., +92-123456789)"
+            title="Enter a valid phone number in the format: +91-number (e.g., +91-9876543210)"
             value={offerCounsellorForm.phoneNo}
             onChange={(event) => {
               const enteredNumber = event.target.value.replace(/\+\d{1,4}-/, '');
               const limitedNumber = enteredNumber.slice(0, 10);
               dispatch(handleChange({
                 name: event.target.name,
-                value: `+92-${limitedNumber}`
+                value: `+91-${limitedNumber}`
               }))
             }}
           />
@@ -356,8 +367,13 @@ export default function OfferCounselling(){
             }))
           }}
           required>
+            <option value="">-- Select Qualification --</option>
+            <option value="Bachelor's">Bachelor's Degree</option>
+            <option value="Master's">Master's Degree</option>
             <option value="M.Phil">M.Phil</option>
-            <option value="PHD">PHD</option>
+            <option value="PhD">PhD</option>
+            <option value="Diploma">Post-Graduate Diploma</option>
+            <option value="Professional Certification">Professional Certification</option>
           </select>
         <input className={OfferCounsellingCSS.input}
             type="text" 
@@ -603,6 +619,6 @@ export default function OfferCounselling(){
     </form>
    </div>
 
-  </>
+  </div>
   )
 }

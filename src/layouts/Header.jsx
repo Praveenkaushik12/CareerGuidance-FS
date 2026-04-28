@@ -18,6 +18,15 @@ export default function Header() {
     const [notification, setNotification] = React.useState(null)
     const [profileMenu, setProfileMenu] = React.useState(null)
     const [menuOpen, setMenuOpen] = React.useState(false)
+    const [darkMode, setDarkMode] = React.useState(() => {
+        return localStorage.getItem('theme') === 'dark'
+    })
+
+    React.useEffect(() => {
+        const theme = darkMode ? 'dark' : 'light'
+        document.documentElement.setAttribute('data-theme', theme)
+        localStorage.setItem('theme', theme)
+    }, [darkMode])
     const notificationOpen = Boolean(notification)
     const profileMenuOpen = Boolean(profileMenu)
     const { user_id, is_exist, role, name, email, counsellor_approved } = useSelector((store) => store.authentication)
@@ -166,47 +175,66 @@ export default function Header() {
                                 </li>
                             )}
 
-                            {/* Bell / notifications */}
-                            <li className="nav-item">
-                                <Link
-                                    className={HeaderCSS.links}
-                                    id="notification-button"
-                                    aria-controls={notificationOpen ? 'notification-menu' : undefined}
-                                    aria-haspopup="true"
-                                    aria-expanded={notificationOpen ? 'true' : undefined}
-                                    onClick={handleNotification}
+                            {/* Dark mode toggle */}
+                            <li className="nav-item" style={{ display: 'flex', alignItems: 'center' }}>
+                                <button
+                                    onClick={() => setDarkMode(d => !d)}
+                                    title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                                    style={{
+                                        background: 'none', border: 'none', cursor: 'pointer',
+                                        fontSize: 18, color: darkMode ? '#fdd835' : '#1a237e',
+                                        padding: '4px 8px', borderRadius: 6,
+                                        transition: 'color 0.2s'
+                                    }}
+                                    aria-label="Toggle dark mode"
                                 >
-                                    {notificationData && notificationData.length > 0 && notificationData[0].total_unread_message_count > 0 && (
-                                        <span className={HeaderCSS.notificationCount}>
-                                            {notificationData[0].total_unread_message_count}
-                                        </span>
-                                    )}
-                                    <span><i className={`${HeaderCSS.bellIcon} fa-solid fa-bell`}></i></span>
-                                </Link>
-                                <Menu
-                                    id="notification-menu"
-                                    aria-labelledby="notification-button"
-                                    anchorEl={notification}
-                                    open={notificationOpen}
-                                    onClose={handleNotificationClose}
-                                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                                    PaperProps={{ style: { width: "300px", backgroundColor: "var(--lightPink)" } }}
-                                >
-                                    {notificationData && notificationData.length > 0 ? (
-                                        notificationData.map((item, index) => ([
-                                            <MenuItem key={`menu-item-${index}`} style={{ whiteSpace: 'normal', fontFamily: "var(--fontHeading)" }}>
-                                                You may have {item.channel_unread_message_count} unread message from {item.sender_name} and message is {item.last_message}
-                                            </MenuItem>,
-                                            index < notificationData.length - 1 && <hr key={`divider-${index}`} />,
-                                        ]))
-                                    ) : (
-                                        <MenuItem style={{ whiteSpace: 'normal', fontFamily: "var(--fontHeading)", color: '#888', fontSize: 14 }}>
-                                            No new notifications
-                                        </MenuItem>
-                                    )}
-                                </Menu>
+                                    <i className={darkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'}></i>
+                                </button>
                             </li>
+
+                            {/* Bell / notifications — logged-in users only */}
+                            {is_exist && (
+                                <li className="nav-item">
+                                    <Link
+                                        className={HeaderCSS.links}
+                                        id="notification-button"
+                                        aria-controls={notificationOpen ? 'notification-menu' : undefined}
+                                        aria-haspopup="true"
+                                        aria-expanded={notificationOpen ? 'true' : undefined}
+                                        onClick={handleNotification}
+                                    >
+                                        {notificationData && notificationData.length > 0 && notificationData[0].total_unread_message_count > 0 && (
+                                            <span className={HeaderCSS.notificationCount}>
+                                                {notificationData[0].total_unread_message_count}
+                                            </span>
+                                        )}
+                                        <span><i className={`${HeaderCSS.bellIcon} fa-solid fa-bell`}></i></span>
+                                    </Link>
+                                    <Menu
+                                        id="notification-menu"
+                                        aria-labelledby="notification-button"
+                                        anchorEl={notification}
+                                        open={notificationOpen}
+                                        onClose={handleNotificationClose}
+                                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                        PaperProps={{ style: { width: "300px", backgroundColor: "var(--lightPink)" } }}
+                                    >
+                                        {notificationData && notificationData.length > 0 ? (
+                                            notificationData.map((item, index) => ([
+                                                <MenuItem key={`menu-item-${index}`} style={{ whiteSpace: 'normal', fontFamily: "var(--fontHeading)" }}>
+                                                    You may have {item.channel_unread_message_count} unread message from {item.sender_name} and message is {item.last_message}
+                                                </MenuItem>,
+                                                index < notificationData.length - 1 && <hr key={`divider-${index}`} />,
+                                            ]))
+                                        ) : (
+                                            <MenuItem style={{ whiteSpace: 'normal', fontFamily: "var(--fontHeading)", color: '#888', fontSize: 14 }}>
+                                                No new notifications
+                                            </MenuItem>
+                                        )}
+                                    </Menu>
+                                </li>
+                            )}
                         </ul>
                     </div>
                 </div>

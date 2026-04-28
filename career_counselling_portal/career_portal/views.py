@@ -277,6 +277,16 @@ def loginUser(request):
 def getSessionData(request):
     if request.method == 'GET':
         if request.session.get('user_id') is not None:
+            # Pull live profile fields from DB so they are always fresh
+            school = stream = age = gender = None
+            try:
+                user = ACU.objects.get(id=request.session['user_id'])
+                school = user.school
+                stream = user.stream
+                age    = user.age
+                gender = user.gender
+            except Exception:
+                pass
             return JsonResponse({
                 'is_exist': True,
                 'user_id': request.session.get('user_id'),
@@ -284,9 +294,13 @@ def getSessionData(request):
                 'email': request.session.get('email'),
                 'role': request.session.get('role'),
                 'counsellor_approved': request.session.get('counsellor_approved', False),
+                'school': school,
+                'stream': stream,
+                'age': age,
+                'gender': gender,
             })
         else:
-            return JsonResponse({'is_exist': False, 'user_id': None, 'name': None, 'email': None, 'role': None, 'counsellor_approved': False})
+            return JsonResponse({'is_exist': False, 'user_id': None, 'name': None, 'email': None, 'role': None, 'counsellor_approved': False, 'school': None, 'stream': None, 'age': None, 'gender': None})
     else:
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
     
@@ -1225,12 +1239,12 @@ def ask_gemini(request):
     if request.method == "POST":
         data = json.loads(request.body)
         headers = {"Content-Type": "application/json"}
-        api_key = "AIzaSyA0vEjc8l76z-_xp-0NhVxvBukWtPC54gw"
+        api_key = "AIzaSyDeWeOqAIvzJTdfMvPu8a57gTDQdJ0d2-Y"
 
         print("[CareerGPT] Request received. Payload:", json.dumps(data)[:200])
 
         # Try multiple models in case one has exhausted its quota
-        models = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash"]
+        models = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
         response = None
 
         for model in models:
@@ -1248,3 +1262,171 @@ def ask_gemini(request):
 
         print(f"[CareerGPT] All models failed. Last response: {response.text[:300]}")
         return JsonResponse(response.json(), status=response.status_code)
+
+
+def _call_gemini(prompt, tag="Gemini"):
+    """Shared helper: tries multiple Gemini models, returns (text, None) or (None, error_str)."""
+    api_key = "AIzaSyDeWeOqAIvzJTdfMvPu8a57gTDQdJ0d2-Y"
+    headers  = {"Content-Type": "application/json"}
+    payload  = {"contents": [{"parts": [{"text": prompt}]}]}
+    models   = [
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-8b",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+    ]
+    last_error = "No models attempted"
+    for model in models:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            print(f"[{tag}] Trying model: {model}")
+            resp = requests.post(url, headers=headers, json=payload, timeout=30)
+            print(f"[{tag}] {model} -> HTTP {resp.status_code}")
+            if resp.status_code == 200:
+                resp_json = resp.json()
+                text = (
+                    resp_json
+                    .get("candidates", [{}])[0]
+                    .get("content", {})
+                    .get("parts", [{}])[0]
+                    .get("text", "")
+                )
+                if text.strip():
+                    print(f"[{tag}] Success with {model} ({len(text)} chars)")
+                    return text.strip(), None
+                else:
+                    last_error = f"{model}: empty text in response"
+                    print(f"[{tag}] {last_error}. Full resp: {resp_json}")
+            else:
+                last_error = f"{model}: HTTP {resp.status_code} — {resp.text[:300]}"
+                print(f"[{tag}] {last_error}")
+        except Exception as exc:
+            last_error = f"{model}: exception — {exc}"
+            print(f"[{tag}] {last_error}")
+    return None, last_error
+
+
+@csrf_exempt
+def generateAssessmentQuestions(request):
+    """Generate personalised career-assessment questions based on the student's profile."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        profile = json.loads(request.body).get("profile", {})
+    except Exception as e:
+        print(f"[Questions] JSON parse error: {e}")
+        return JsonResponse({"error": "Invalid request body."}, status=400)
+
+    class_level = str(profile.get("class_level") or profile.get("age") or "")
+    stream      = profile.get("stream") or ""
+    school      = profile.get("school") or ""
+    gender      = profile.get("gender") or ""
+
+    print(f"[Questions] Profile received — class: {class_level}, stream: {stream}, school: {school}, gender: {gender}")
+
+    # Determine difficulty tier
+    try:
+        cl = int(class_level)
+    except ValueError:
+        cl = 0
+    if cl <= 7:
+        tier = "a primary/middle school student (Class 5-7, age ~10-12). Use simple, fun, and relatable everyday scenarios."
+    elif cl <= 10:
+        tier = "a high school student (Class 8-10, age ~13-15). Use slightly more mature scenarios involving school projects, hobbies, and future thinking."
+    else:
+        tier = "a senior secondary student (Class 11-12, age ~16-18). Use realistic scenarios about career choices, academic specialisation, and professional interests."
+
+    stream_context = f" The student is in the {stream} stream." if stream else ""
+    school_context = f" School: {school}." if school else ""
+
+    prompt = (
+        f"You are a career guidance counsellor creating a personalised assessment for {tier}{stream_context}{school_context}\n\n"
+        "Generate exactly 8 scenario-based questions to assess their career interests and natural strengths. "
+        "Each question must have exactly 5 options.\n\n"
+        "Return ONLY a valid JSON array. No explanation, no markdown, no code fences. "
+        "Format:\n"
+        '[\n'
+        '  {"question": "...", "options": ["option A", "option B", "option C", "option D", "option E"]},\n'
+        '  ...\n'
+        ']\n\n'
+        "Rules:\n"
+        "- Questions must be scenario-based (what would you do if / which would you choose / how would you react)\n"
+        "- Options must represent distinctly different interests or aptitudes\n"
+        "- Language must match the age group — simple for younger, more mature for older\n"
+        f"- If stream is Science, include questions around science/tech/medical scenarios\n"
+        f"- If stream is Commerce, include scenarios around business/finance/management\n"
+        f"- If stream is Arts/Humanities, include scenarios around creative/social/legal fields\n"
+        "- If no stream is given, keep questions broad across all domains"
+    )
+
+    print(f"[Questions] Sending prompt to Gemini...")
+    text, err = _call_gemini(prompt, tag="Questions")
+    if err:
+        print(f"[Questions] Failed: {err}")
+        return JsonResponse({"error": f"Could not generate questions. Detail: {err}"}, status=503)
+
+    # Parse JSON from Gemini response (strip any accidental markdown fences)
+    clean = text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    print(f"[Questions] Raw response (first 300): {clean[:300]}")
+    try:
+        questions = json.loads(clean)
+        if not isinstance(questions, list) or len(questions) == 0:
+            raise ValueError("Expected a non-empty JSON array")
+        print(f"[Questions] Parsed {len(questions)} questions successfully")
+        return JsonResponse({"questions": questions}, status=200)
+    except Exception as e:
+        print(f"[Questions] JSON parse failed: {e}. Raw text: {clean[:500]}")
+        return JsonResponse({"error": f"Question parsing failed: {e}. Please retry."}, status=500)
+
+
+@csrf_exempt
+def assessCareer(request):
+    """Take the student's Q&A answers and return AI career suggestions."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except Exception as e:
+        print(f"[Assessment] JSON parse error: {e}")
+        return JsonResponse({"error": "Invalid request body."}, status=400)
+
+    answers = data.get("answers", [])
+    profile = data.get("profile", {})
+    print(f"[Assessment] Received {len(answers)} answers. Profile: {profile}")
+
+    profile_parts = []
+    if profile.get("class_level"): profile_parts.append(f"Class/Grade: {profile['class_level']}")
+    if profile.get("age"):         profile_parts.append(f"Age: {profile['age']}")
+    if profile.get("gender"):      profile_parts.append(f"Gender: {profile['gender']}")
+    if profile.get("stream"):      profile_parts.append(f"Academic stream: {profile['stream']}")
+    if profile.get("school"):      profile_parts.append(f"School: {profile['school']}")
+    profile_text = "\n".join(profile_parts) if profile_parts else "Not provided"
+
+    qa_lines = "\n".join(
+        f"Q{i+1}: {item['question']}\nAnswer: {item['answer']}"
+        for i, item in enumerate(answers)
+    )
+
+    prompt = (
+        "You are a friendly and encouraging career guidance counsellor for school students.\n\n"
+        "A student has completed a personalised career interest assessment. "
+        "Based on their profile and answers, suggest 4 to 5 career paths that suit them best.\n\n"
+        f"Student Profile:\n{profile_text}\n\n"
+        f"Assessment Answers:\n{qa_lines}\n\n"
+        "For each career suggestion:\n"
+        "1. Write the career title as a numbered heading (e.g. '1. Software Engineer')\n"
+        "2. In 2-3 sentences explain why it matches this student based on their answers\n"
+        "3. List the school subjects they should focus on and 1-2 concrete next steps\n\n"
+        "Use simple, positive, and age-appropriate language. "
+        "Do not use ** or ## markdown. Use plain numbered headings only."
+    )
+
+    print(f"[Assessment] Sending answers to Gemini for career suggestions...")
+    text, err = _call_gemini(prompt, tag="Assessment")
+    if err:
+        print(f"[Assessment] Failed: {err}")
+        return JsonResponse({"error": f"Assessment service unavailable. Detail: {err}"}, status=503)
+
+    return JsonResponse({"result": text}, status=200)

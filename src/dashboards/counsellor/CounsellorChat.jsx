@@ -131,7 +131,7 @@ export default function CounsellorChat() {
           >
             <div style={styles.avatar}>{u.name.charAt(0).toUpperCase()}</div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: "bold", fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</div>
+              <div style={{ fontWeight: "bold", fontSize: 14, color: "#1a1a2e", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</div>
               <div style={{ fontSize: 12, color: "#888", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</div>
             </div>
           </div>

@@ -24,9 +24,19 @@
     margin: 50px 0px;
   }
 
-  .avatarImage{
-    width: 170px;
-    margin-top: 70px;
+  .avatarCircle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a237e, #4a148c);
+    color: #fff;
+    font-size: 44px;
+    font-weight: bold;
+    font-family: var(--fontHeading);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 50px auto 16px;
   }
   
   .form {
@@ -138,6 +148,21 @@
   }
 
   
+/* ── Dark mode ── */
+[data-theme="dark"] .inner,
+[data-theme="dark"] .form {
+  background: #1a1a2e;
+  color: #e8eaf6;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .profileHeading { color: var(--yellow); }
+[data-theme="dark"] .formControl {
+  color: #e8eaf6;
+  border-bottom-color: #3949ab;
+}
+[data-theme="dark"] .formHolder span { color: #9fa8da; }
+[data-theme="dark"] .wrapper { background: #0f0f1a; }
+
   @media (max-width: 991px) {
     .inner {
       width: 400px;

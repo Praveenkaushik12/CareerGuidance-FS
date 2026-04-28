@@ -167,4 +167,17 @@
       background: none;
     }
   }
-  
+
+/* ── Dark mode ── */
+[data-theme="dark"] .inner,
+[data-theme="dark"] .form {
+  background: #1a1a2e;
+  color: #e8eaf6;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .formControl {
+  color: #e8eaf6;
+  border-bottom-color: #3949ab;
+}
+[data-theme="dark"] .formHolder span { color: #9fa8da; }
+[data-theme="dark"] .wrapper { background: #0f0f1a; }

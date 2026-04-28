@@ -1,11 +1,63 @@
-:root{
-    --lightPink: #FED9E8;
-    --lavender: #E7BCDE;
-    --purple: #BB9CC0;
-    --blue: #67729D;
+:root {
+    /* ── Brand palette ── */
+    --blue:        #1a237e;
+    --blueMid:     #3949ab;
+    --blueLight:   #e8eaf6;
+    --purple:      #4a148c;
+    --purpleMid:   #7b1fa2;
+    --purpleLight: #ede7f6;
+    --yellow:      #fdd835;
+    --yellowDark:  #f9a825;
+    --red:         #c62828;
+    --redLight:    #ffebee;
+    --black:       #0d0d0d;
+    --white:       #ffffff;
+    --grey:        #f5f5f5;
+    --textDark:    #1a1a2e;
+    --textMid:     #444;
+    --textLight:   #888;
+
+    /* legacy aliases kept for old CSS that still uses them */
+    --lightPink:   #ede7f6;
+    --lavender:    #d1c4e9;
+
     --fontHeading: 'Philosopher', sans-serif;
-    
 }
-body{
-    background-image: linear-gradient(to right, var(--blue), var(--lightPink));
+
+body {
+    background: var(--white);
+    color: var(--textDark);
+    margin: 0;
+    padding: 0;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* ── Dark mode overrides ── */
+[data-theme="dark"] {
+    --white:       #0f0f1a;
+    --grey:        #1a1a2e;
+    --blueLight:   #1a1a2e;
+    --purpleLight: #1e1030;
+    --textDark:    #e8eaf6;
+    --textMid:     #b0b8d8;
+    --textLight:   #6670a0;
+}
+
+[data-theme="dark"] body {
+    background: #0f0f1a;
+    color: #e8eaf6;
+}
+
+/* Pages that use white/light backgrounds need inversion in dark mode */
+[data-theme="dark"] .header {
+    background: #0f0f1a !important;
+    border-bottom-color: var(--yellow) !important;
+}
+
+[data-theme="dark"] .blogDetailContainer,
+[data-theme="dark"] .reviewForm,
+[data-theme="dark"] .loginForm,
+[data-theme="dark"] .signupForm {
+    background: #1a1a2e !important;
+    color: #e8eaf6 !important;
 }

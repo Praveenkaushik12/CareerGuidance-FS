@@ -3,7 +3,7 @@
     font-family: var(--fontHeading);
     font-weight: bold;
     font-size: 18px;
-    color: #AA4A44;
+    color: var(--blue);
 }
 
 .input{
@@ -30,9 +30,12 @@
 
 .validateBtn{
     font-family: var(--fontHeading);
-    background-color: #AA4A44;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
     font-size: 18px;
     color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 24px;
 }
 
 .error{
@@ -48,6 +51,6 @@
     margin-top: 8px;
     font-style: italic;
     font-weight: bold;
-    color: #AA4A44;
+    color: var(--blue);
     font-size: 18px;
 }

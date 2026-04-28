@@ -5,6 +5,7 @@ import SignupSuccess from './pages/SignupSuccess'
 import Login from "./pages/Login"
 import BlogDetail from './pages/BlogDetail'
 import AskCounsellor from './pages/AskCounsellor'
+import CareerAssessment from './pages/CareerAssessment/CareerAssessment'
 import Layout from './layouts/Layout'
 import Home from './pages/Home'
 import AboutUs from './pages/AboutUs'
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="signupSuccess" element={<SignupSuccess />} />
             {/* Public — no login required */}
             <Route path="askCounsellor" element={<AskCounsellor />} />
+            <Route path="careerAssessment" element={<CareerAssessment />} />
 
             <Route element={<AuthenticateUser />} >
               <Route path="OfferCounselling" element={<OfferCounselling />} />

@@ -1,11 +1,14 @@
 
 .MainDiv{
   font-family: var(--fontHeading);
+  background: linear-gradient(160deg, var(--blueLight) 0%, #f3e5f5 100%);
+  min-height: 100vh;
+  padding-bottom: 40px;
 }
 .CounsellorsHeading {
   font-weight: bold;
-  color: azure;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  color: var(--blue);
+  text-shadow: none;
 }
 .image {
   width:100%;
@@ -35,6 +38,11 @@
   border-top: 3px solid #050a32;
   width: 100%;
 }
+/* ── Dark mode ── */
+[data-theme="dark"] .MainDiv { background: linear-gradient(160deg, #0f0f1a 0%, #1a0030 100%); }
+[data-theme="dark"] .CounsellorsHeading { color: var(--yellow); }
+[data-theme="dark"] .CounsellorCard { background: #1a1a2e !important; color: #e8eaf6 !important; }
+
 @media (max-width:765px)
 {
   .image {

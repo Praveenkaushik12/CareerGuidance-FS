@@ -43,3 +43,14 @@
   font-family: var(--fontHeading);
   font-size: 20px;
 }
+
+/* ── Dark mode ── */
+[data-theme="dark"] .inner {
+  background: #1a1a2e;
+  color: #e8eaf6;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .heading { color: var(--yellow); }
+[data-theme="dark"] .dataGrid { background: #1a1a2e; color: #e8eaf6; }
+[data-theme="dark"] .columnHeader { color: var(--yellow); }
+[data-theme="dark"] .rowData { color: #b0b8d8; }

@@ -15,46 +15,42 @@ export default function BlogCards() {
     const topBlogs = blogsDataList ? blogsDataList.slice(0, 4) : []
 
     return (
-        <div id="blogCards" className={`${BlogCardsCSS.overAll} mt-5`}>
-            <div className={`${BlogCardsCSS.mainHeading} text-center`}>
-                <h1>Popular Blogs</h1>
+        <div id="blogCards" className={BlogCardsCSS.overAll}>
+            <div className={BlogCardsCSS.sectionHeader}>
+                <h2 className={BlogCardsCSS.mainHeading}>Popular Blogs</h2>
+                <p className={BlogCardsCSS.sectionSubtitle}>Insights and advice from our expert counsellors</p>
             </div>
+
             <section className={BlogCardsCSS.cardsWrapper}>
                 {!blogsDataList ? (
-                    <p style={{ textAlign: 'center', color: '#888', width: '100%' }}>Loading...</p>
+                    <p style={{ textAlign: 'center', color: '#888', gridColumn: '1/-1', padding: '40px 0' }}>Loading…</p>
                 ) : blogsDataList.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: '#888', width: '100%', fontSize: '18px', padding: '40px 0' }}>
+                    <p style={{ textAlign: 'center', color: '#888', gridColumn: '1/-1', fontSize: 16, padding: '40px 0' }}>
                         No blogs published yet. Check back soon!
                     </p>
                 ) : (
                     topBlogs.map(item => (
-                        <div className={BlogCardsCSS.cardGridSpace} key={item.id}>
-                            <Link
-                                className={BlogCardsCSS.card}
-                                to={`/${item.id}`}
-                                style={{ backgroundImage: `url("../../career_counselling_portal/Counsellors/${item.counsellor_email}/Blogs/${item.cover_image}")` }}
-                            >
-                                <div>
-                                    <h1>{item.title}</h1>
-                                    <p dangerouslySetInnerHTML={{ __html: item.description }}></p>
-                                    <div className={BlogCardsCSS.date}>{item.created_at}</div>
-                                </div>
-                            </Link>
-                        </div>
+                        <Link
+                            key={item.id}
+                            className={BlogCardsCSS.card}
+                            to={`/${item.id}`}
+                            style={{ backgroundImage: `url("../../career_counselling_portal/Counsellors/${item.counsellor_email}/Blogs/${item.cover_image}")` }}
+                        >
+                            <div className={BlogCardsCSS.date}>{item.created_at}</div>
+                            <div>
+                                <h1>{item.title}</h1>
+                                <p dangerouslySetInnerHTML={{ __html: item.description }} />
+                            </div>
+                        </Link>
                     ))
                 )}
             </section>
+
             {blogsDataList && blogsDataList.length > 4 && (
-                <div style={{ textAlign: 'center', padding: '16px 0 32px' }}>
-                    <Link to="/blogs" style={{
-                        background: 'linear-gradient(135deg, #1a237e, #3949ab)',
-                        color: '#fff',
-                        padding: '10px 28px',
-                        borderRadius: '8px',
-                        textDecoration: 'none',
-                        fontFamily: 'var(--fontHeading)',
-                        fontSize: '15px',
-                    }}>View All Blogs</Link>
+                <div className={BlogCardsCSS.viewAllWrap}>
+                    <Link to="/blogs" className={BlogCardsCSS.viewAllBtn}>
+                        View All Blogs <i className="fa-solid fa-arrow-right"></i>
+                    </Link>
                 </div>
             )}
         </div>

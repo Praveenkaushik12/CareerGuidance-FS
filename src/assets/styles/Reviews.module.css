@@ -1,237 +1,258 @@
-* {
-    box-sizing: border-box;
-  }
-  
-  :focus {
-    outline: none;
-  }
-  
-  .wrapper {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .successMsg{
-    text-align: center;
-    color:green;
-  }
-  
-  .inner {
-    position: relative;
-    width: 900px;
-    z-index: 9;
-    padding: 30px 60px 40px;
-    background: #fff;
-    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
-    margin: 50px 0px;
-  }
+* { box-sizing: border-box; }
 
-.ratingLogo {
-    width: 200px;
-    height: 130px;
-    cursor: pointer;
+/* ── Reviews page wrapper (standalone route) ── */
+.wrapper {
+  background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 60%, var(--black) 100%);
+  padding: 60px 20px;
+  min-height: 100vh;
 }
 
-.revLogo{
-    width: 200px;
-    height: 130px;
-    cursor: pointer;
+/* ── Section: submit review/rating ── */
+.submitSection {
+  max-width: 860px;
+  margin: 0 auto 64px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 40px 48px;
+  backdrop-filter: blur(8px);
 }
 
-  
-  .form {
-    /* width: 100%; */
-    position: relative;
-    z-index: 9;
-    padding: 20px 60px 40px;
-    background: #fff;
-    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.2);
-  }
-  
-  
-  .formHolder {
-    position: relative;
-    margin-top: 40px;
-    margin-bottom: 21px;
-  }
-  
-  .formHolder span {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 15px;
-    color: #666;
-  }
-  
-  .formControl {
-    border: none;
-    border-bottom: 1px solid #e6e6e6;
-    display: block;
-    width: 100%;
-    height: 38px;
-    background: none;
-    padding: 3px 42px 0px;
-    color: #666;
-    font-family: var(--fontHeading);
-    font-size: 18px;
-  }
-  
-  .formControl:focus {
-    border-bottom: 1px solid var(--purple);
-  }
-  
-  .submitBtn {
-    border: none;
-    width: 100%;
-    height: 49px;
-    margin-top: 50px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    background: var(--blue);
-    color: white;
-    text-transform: uppercase;
-    font-family: var(--fontHeading);
-    font-size: 20px;
-    letter-spacing: 2px;
-    transition: all 0.5s;
-    position: relative;
-    overflow: hidden;
-    text-decoration: none;
-  }
-  
-  .submitBtn span {
-    position: relative;
-    z-index: 2;
-  }
-  
-  .submitBtn:before,
-  .submitBtn:after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    background-color: var(--purple);
-    transition: all 0.3s;
-    transform: translate(-100%, 0);
-    transition-timing-function: cubic-bezier(0.75, 0, 0.125, 1);
-  }
-  
-  .submitBtn:after {
-    transition-delay: 0.2s;
-  }
-  
-  .submitBtn:hover:before,
-  .submitBtn:hover:after {
-    transform: translate(0, 0);
-  }
+.submitTabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
 
-  .heading {
-    font-size: 40px;
-    font-family: var(--fontHeading);
-    color: white;
-    padding: 10px;
-    text-shadow: 5px 5px 5px var(--blue);
-    position: relative; /* Positioning context for pseudo-element */
-  }
-  
-  .heading::after {
-    content: ''; /* Create a pseudo-element */
-    position: absolute;
-    bottom: 0; /* Position at the bottom of the mainHeading */
-    left: 50%; /* Center horizontally */
-    width: 50%; /* Half width */
-    border-bottom: 2px solid white; /* Border properties */
-    transform: translateX(-50%); /* Adjust to center properly */
-  }
+.tabBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.7);
+  font-family: var(--fontHeading);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
 
-  .reviewCards{
-    width: 1100px;
-  }
+.tabBtn:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
 
-  .singleCard{
-    padding: 10px;
-    border: 2px solid var(--blue);
-  }
+.tabBtnActive {
+  border-color: var(--yellow);
+  background: rgba(253,216,53,0.15);
+  color: var(--yellow);
+}
 
-  .name{
-    color: var(--blue);
-    text-shadow: 2px 2px var(--lavender);
-    font-size: 30px;
-  }
+.tabBtn img { width: 28px; height: 28px; object-fit: contain; }
 
-  .body{
-    color: var(--blue);
-  }
-  
-  /****** Style Star Rating Widget *****/
+/* ── Form inside submit section ── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
 
-  .rateHeading{
-    font-size: 18px;
-    font-family: var(--fontHeading);
-  }
+.formHolder {
+  position: relative;
+}
 
-  .rating { 
-    width: 208px; 
-    height: 20px;
-    margin-top: -8px;
-    margin-left: 110px;
-} 
-.rating label { 
-    float: right; 
-    position: relative; 
-    width: 40px; 
-    height: 40px; 
-    cursor: pointer; 
-} 
-.rating label:not(:first-of-type) { 
-    padding-right: 2px; 
-} 
-.rating label:before { 
-    content: "\2605"; 
-    font-size: 42px; 
-    color: #ccc; 
-    line-height: 1; 
-} 
-.rating input { 
-    display: none; 
-} 
-.rating input:checked ~ label:before,
- .rating:not(:checked) > label:hover:before, 
- .rating:not(:checked) > label:hover ~ label:before { color: var(--purple); }
-  
-  @media (max-width: 991px) {
-    .inner {
-      width: 400px;
-      left: 4%;
-    }
-  }
-  
-  @media (max-width: 767px) {
-    .inner {
-      width: 100%;
-      left: 0;
-    }
-  
-    .form {
-      padding: 35px;
-      box-shadow: none;
-    }
-  
-    .wrapper {
-      background: none;
-    }
+.formHolder span {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,0.5);
+  font-size: 15px;
+  pointer-events: none;
+}
 
-    .reviewCards{
-      background: none;
-      width: 300px;
-    }
-  }
-  
+.formControl {
+  width: 100%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px;
+  padding: 12px 14px 12px 42px;
+  color: #fff;
+  font-family: var(--fontHeading);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+
+.formControl::placeholder { color: rgba(255,255,255,0.4); }
+.formControl:focus { border-color: var(--yellow); }
+.formControl option { background: #1a1a2e; color: #fff; }
+
+.submitBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 32px;
+  background: var(--yellow);
+  color: var(--black);
+  border: none;
+  border-radius: 10px;
+  font-family: var(--fontHeading);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  align-self: flex-start;
+}
+
+.submitBtn:hover { opacity: 0.88; transform: translateY(-2px); }
+
+.successMsg {
+  color: #69f0ae;
+  font-family: var(--fontHeading);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* ── Star rating ── */
+.rateHeading {
+  font-size: 14px;
+  font-family: var(--fontHeading);
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 8px;
+}
+
+.rating {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.rating input { display: none; }
+
+.rating label {
+  font-size: 36px;
+  color: rgba(255,255,255,0.25);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.rating label:before { content: "\2605"; }
+
+.rating input:checked ~ label,
+.rating:not(:checked) > label:hover,
+.rating:not(:checked) > label:hover ~ label {
+  color: var(--yellow);
+}
+
+/* ── Latest Reviews section ── */
+.latestSection {
+  background: #f0f2ff;
+  padding: 60px 20px;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.heading {
+  font-family: var(--fontHeading);
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--blue);
+  margin: 0 0 10px;
+  display: inline-block;
+  position: relative;
+}
+
+.heading::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: var(--yellow);
+  border-radius: 99px;
+  margin: 10px auto 0;
+}
+
+.reviewCards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.singleCard {
+  flex: 0 0 260px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(26,35,126,0.1);
+  border: none;
+  border-top: 4px solid var(--blue);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.singleCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 32px rgba(26,35,126,0.18);
+}
+
+.singleCard::before {
+  content: '\201C';
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  font-size: 64px;
+  line-height: 1;
+  color: var(--blueLight);
+  font-family: Georgia, serif;
+}
+
+.name {
+  font-family: var(--fontHeading);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--blue);
+  margin-bottom: 10px;
+}
+
+.body {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.7;
+}
+
+/* ── inner/form wrapper (old compat) ── */
+.inner { display: none; }
+.images { display: none; }
+.revLogo, .ratingLogo { display: none; }
+
+/* ── Dark mode ── */
+[data-theme="dark"] .latestSection { background: #0f0f1a; }
+[data-theme="dark"] .heading { color: var(--yellow); }
+[data-theme="dark"] .singleCard {
+  background: #1a1a2e;
+  border-top-color: var(--yellow);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+[data-theme="dark"] .name { color: var(--yellow); }
+[data-theme="dark"] .body { color: #b0b8d8; }
+[data-theme="dark"] .singleCard::before { color: #2a2a4a; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .submitSection { padding: 28px 20px; }
+  .reviewCards { grid-template-columns: 1fr; }
+  .heading { font-size: 26px; }
+  .tabBtn { padding: 10px 16px; font-size: 13px; }
+}
