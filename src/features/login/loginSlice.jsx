@@ -7,6 +7,7 @@ const initialState = {
         password: ""
     },
     isLogin: null,
+    loginError: null,
 }
 
 
@@ -34,10 +35,9 @@ const loginSlice = createSlice({
             }
         },
         clearForm: (state) => {
-          state.loginForm = {
-            email: "",
-            password: ""
-          }
+          state.loginForm = { email: "", password: "" }
+          state.isLogin = null
+          state.loginError = null
         }
     },
     extraReducers: (builder) => {
@@ -46,9 +46,8 @@ const loginSlice = createSlice({
             console.log("login pending");
           })
           .addCase(loginUser.fulfilled, (state,action) => {
-            console.log("Login fulfilled")
-            state.isLogin= action.payload.isLogin
-            console.log(state.isLogin)
+            state.isLogin = action.payload.isLogin
+            state.loginError = action.payload.reason || null
           })
           .addCase(loginUser.rejected, (state) => {
             console.log("login rejected");

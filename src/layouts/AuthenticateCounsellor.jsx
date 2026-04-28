@@ -5,7 +5,7 @@ import React from "react"
 
 export default function AuthenticateCounsellor(){
     const dispatch = useDispatch()
-    const {is_exist, role, isLoading} = useSelector((store) => store.authentication)
+    const {is_exist, role, counsellor_approved, isLoading} = useSelector((store) => store.authentication)
    
     React.useEffect(() => {
         async function fetchAuthentication() {
@@ -23,8 +23,8 @@ export default function AuthenticateCounsellor(){
         return <Navigate to="login" />
     }
 
-    if(is_exist && (role ==='C' || role === 'B')){
+    if(is_exist && (role === 'C' || role === 'B') && counsellor_approved){
         return <Outlet />
     }
-    return <Navigate to="." />
+    return <Navigate to="/" />
 }

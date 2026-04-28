@@ -117,19 +117,24 @@ def registerCounsellor(request):
             offerCounsellorFormData = json.loads(offerCounsellorFormJson)
             name = offerCounsellorFormData.get('name')
             email = offerCounsellorFormData.get('email')
-            password = make_password(offerCounsellorFormData.get('password'))
 
-            # Store Data in ACU Table
-            counsellor = None
+            # Only registered users can apply; reject unrecognised emails
             try:
                 counsellor = ACU.objects.get(email=email)
-                counsellor.name=name
-                counsellor.password=password
-                counsellor.role='B'
-                counsellor.save()
             except ObjectDoesNotExist:
-                counsellor = ACU(name=name, email=email, password=password, role='C')
-                counsellor.save()
+                return JsonResponse({'status': 'error', 'message': 'Please register an account first.'}, status=400)
+
+            # Reject if a pending or approved counsellor request already exists
+            if counsellor.role in ('B', 'C'):
+                return JsonResponse({'status': 'error', 'message': 'A counsellor request already exists for this account.'}, status=400)
+
+            counsellor.name = name
+            counsellor.role = 'B'
+            counsellor.save()
+            # Keep session in sync so getSessionData reflects the new role immediately
+            request.session['role'] = 'B'
+            request.session['counsellor_approved'] = False
+            request.session['name'] = name
 
             path = makeDirectoy((os.path.join(settings.BASE_DIR, 'Counsellors')), email)
             #print("Path", path)  
@@ -246,19 +251,17 @@ def loginUser(request):
                     request.session['email'] = user.email
                     request.session['user_id'] = user.id
                     request.session['role'] = user.role
-                    return JsonResponse({'isLogin':True})
-                
+                    request.session['counsellor_approved'] = False
+                    return JsonResponse({'isLogin': True})
+
                 if user.role == 'B' or user.role == 'C':
-                    counsellor = Counsellor.objects.get(counsellor_id=user)
-                    is_approved = counsellor.is_approved
-                    if is_approved:
-                        request.session['email'] = user.email
-                        request.session['user_id'] = user.id
-                        request.session['role'] = user.role
-                        request.session['name'] = user.name
-                        return JsonResponse({'isLogin':True})
-                    else: 
-                        return JsonResponse({'isLogin':False})
+                    counsellor = Counsellor.objects.filter(counsellor_id=user).first()
+                    request.session['name'] = user.name
+                    request.session['email'] = user.email
+                    request.session['user_id'] = user.id
+                    request.session['role'] = user.role
+                    request.session['counsellor_approved'] = counsellor.is_approved if counsellor else False
+                    return JsonResponse({'isLogin': True})
             else:
                 return JsonResponse({'isLogin':False})
         except ACU.DoesNotExist:
@@ -274,12 +277,16 @@ def loginUser(request):
 def getSessionData(request):
     if request.method == 'GET':
         if request.session.get('user_id') is not None:
-            user_id = request.session.get('user_id')
-            email = request.session.get('email')
-            role = request.session.get('role')
-            return JsonResponse({'is_exist': True, 'user_id': user_id, 'email': email, 'role': role})
+            return JsonResponse({
+                'is_exist': True,
+                'user_id': request.session.get('user_id'),
+                'name': request.session.get('name'),
+                'email': request.session.get('email'),
+                'role': request.session.get('role'),
+                'counsellor_approved': request.session.get('counsellor_approved', False),
+            })
         else:
-            return JsonResponse({'is_exist': False, 'user_id': None, 'email': None, 'role': None})
+            return JsonResponse({'is_exist': False, 'user_id': None, 'name': None, 'email': None, 'role': None, 'counsellor_approved': False})
     else:
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
     
@@ -312,11 +319,15 @@ def get_truncated_review(description,max_lines=3):
 @api_view(['GET'])
 def getTopCounsellors(request):
     if request.method == 'GET':
-        top_counsellors = (Counsellor.objects
-                           .filter(Q(counsellor_id__role='C') | Q(counsellor_id__role='B'))
-                           .filter(is_approved=True)  # Filter by is_approved field
-                           .annotate(avg_rating=Avg('ratings__rating'))
-                           .order_by('-avg_rating'))
+        logged_in_id = request.session.get('user_id')
+        qs = (Counsellor.objects
+              .filter(Q(counsellor_id__role='C') | Q(counsellor_id__role='B'))
+              .filter(is_approved=True)
+              .annotate(avg_rating=Avg('ratings__rating'))
+              .order_by('-avg_rating'))
+        if logged_in_id:
+            qs = qs.exclude(counsellor_id__id=logged_in_id)
+        top_counsellors = qs
         serializer = TopCounsellorSerializer(top_counsellors, many=True)
         #print(serializer.data)
         for data in serializer.data:
@@ -409,7 +420,7 @@ def saveRatings(request):
 def fetchBlogsData(request):
     if request.method == 'GET':
         try:
-            blogsData = Blogs.objects.all()
+            blogsData = Blogs.objects.filter(is_approved=True)
             serializer = BlogsSerializer(blogsData, many=True)
             for data in serializer.data:
                 if data["description"]:
@@ -1044,14 +1055,196 @@ def sendBirdWebHook(request):
    
 
 @csrf_exempt
+def sendMessage(request):
+    if request.method == 'POST':
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return JsonResponse({'message': 'Not logged in'}, status=401)
+        data = json.loads(request.body.decode('utf-8'))
+        receiver_id = data.get('receiver_id')
+        content = data.get('content', '').strip()
+        if not content:
+            return JsonResponse({'message': 'Empty message'}, status=400)
+        try:
+            sender = ACU.objects.get(id=user_id)
+            receiver = ACU.objects.get(id=receiver_id)
+            msg = Message.objects.create(sender=sender, receiver=receiver, content=content)
+            return JsonResponse({'id': msg.id, 'content': msg.content, 'created_at': str(msg.created_at), 'sender_id': sender.id, 'sender_name': sender.name})
+        except ACU.DoesNotExist:
+            return JsonResponse({'message': 'User not found'}, status=404)
+    return JsonResponse({'message': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def getMessages(request):
+    if request.method == 'GET':
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return JsonResponse({'message': 'Not logged in'}, status=401)
+        receiver_id = request.GET.get('receiver_id')
+        try:
+            messages = Message.objects.filter(
+                Q(sender_id=user_id, receiver_id=receiver_id) |
+                Q(sender_id=receiver_id, receiver_id=user_id)
+            ).values('id', 'content', 'created_at', 'sender_id', 'sender__name')
+            return JsonResponse({'messages': list(messages)})
+        except Exception as e:
+            return JsonResponse({'message': str(e)}, status=500)
+    return JsonResponse({'message': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def getCounsellorConversations(request):
+    if request.method == 'GET':
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return JsonResponse({'message': 'Not logged in'}, status=401)
+        # Find all unique users who have exchanged messages with this counsellor
+        sent_to = Message.objects.filter(sender_id=user_id).values_list('receiver_id', flat=True)
+        received_from = Message.objects.filter(receiver_id=user_id).values_list('sender_id', flat=True)
+        partner_ids = set(list(sent_to) + list(received_from))
+        partners = ACU.objects.filter(id__in=partner_ids).values(
+            'id', 'name', 'email', 'school', 'stream', 'age', 'gender'
+        )
+        return JsonResponse({'conversations': list(partners)})
+    return JsonResponse({'message': 'Method not allowed'}, status=405)
+
+
+@api_view(['GET'])
+def getUserProfile(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return JsonResponse({'status': 'error'}, status=401)
+    try:
+        user = ACU.objects.get(id=user_id)
+        data = {'name': user.name, 'email': user.email, 'role': user.role}
+        if user.role in ('C', 'B'):
+            counsellor = (Counsellor.objects
+                          .select_related('counsellor_id')
+                          .prefetch_related('working_experiences', 'qualification')
+                          .filter(counsellor_id=user).first())
+            if counsellor:
+                data['counsellor'] = CounsellorSerializer(counsellor).data
+        else:
+            data['school'] = user.school
+            data['stream'] = user.stream
+            data['age'] = user.age
+            data['gender'] = user.gender
+        return JsonResponse({'status': 'success', 'profile': data})
+    except ACU.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'User not found'}, status=404)
+
+
+@csrf_exempt
+def updateUserProfile(request):
+    if request.method == 'POST':
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return JsonResponse({'status': 'error'}, status=401)
+        try:
+            user = ACU.objects.get(id=user_id)
+            name = request.POST.get('name', '').strip()
+            password = request.POST.get('password', '').strip()
+            if name:
+                user.name = name
+                request.session['name'] = name
+            if password:
+                user.password = make_password(password)
+            if user.role in ('C', 'B'):
+                counsellor = Counsellor.objects.filter(counsellor_id=user).first()
+                if counsellor:
+                    phone_no = request.POST.get('phone_no', '').strip()
+                    if phone_no:
+                        counsellor.phone_no = phone_no
+                    profile_pic = request.FILES.get('profilePic')
+                    if profile_pic:
+                        path = os.path.join(settings.BASE_DIR, 'Counsellors', user.email)
+                        if counsellor.profile_pic:
+                            deleteImage(path, counsellor.profile_pic[1:])
+                        counsellor.profile_pic = saveImage(path, "profilePic", profile_pic.name, profile_pic)
+                    counsellor.save()
+            else:
+                # Student-specific fields
+                school = request.POST.get('school', None)
+                stream = request.POST.get('stream', None)
+                age_str = request.POST.get('age', None)
+                gender = request.POST.get('gender', None)
+                if school is not None:
+                    user.school = school
+                if stream is not None:
+                    user.stream = stream
+                if age_str:
+                    try:
+                        user.age = int(age_str)
+                    except ValueError:
+                        pass
+                if gender is not None:
+                    user.gender = gender
+            user.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def cancelCounsellorRequest(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return JsonResponse({'status': 'error'}, status=401)
+    try:
+        user = ACU.objects.get(id=user_id)
+        if user.role != 'B':
+            return JsonResponse({'status': 'error', 'message': 'No pending request found'}, status=400)
+
+        counsellor = Counsellor.objects.filter(counsellor_id=user).first()
+        if counsellor:
+            # Best-effort directory removal — don't let a missing folder block the DB reset
+            try:
+                dir_path = os.path.join(settings.BASE_DIR, 'Counsellors', user.email)
+                if os.path.exists(dir_path):
+                    shutil.rmtree(dir_path)
+            except Exception as dir_err:
+                print(f"[cancelCounsellorRequest] Could not remove directory: {dir_err}")
+            counsellor.delete()
+
+        user.role = 'U'
+        user.save()
+        request.session['role'] = 'U'
+        request.session['counsellor_approved'] = False
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        print(f"[cancelCounsellorRequest] Error: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt
 def ask_gemini(request):
     if request.method == "POST":
         data = json.loads(request.body)
         headers = {"Content-Type": "application/json"}
-        api_key = "AIzaSyCyXwy34sBE-TEzuva6Eu7ON2VuEwwPSt4"
+        api_key = "AIzaSyA0vEjc8l76z-_xp-0NhVxvBukWtPC54gw"
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        print("[CareerGPT] Request received. Payload:", json.dumps(data)[:200])
 
-        response = requests.post(url, headers=headers, json=data)
+        # Try multiple models in case one has exhausted its quota
+        models = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash"]
+        response = None
 
+        for model in models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            print(f"[CareerGPT] Trying model: {model}")
+            response = requests.post(url, headers=headers, json=data)
+            print(f"[CareerGPT] {model} -> status {response.status_code}")
+            if response.status_code == 200:
+                resp_json = response.json()
+                text = resp_json.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+                print(f"[CareerGPT] Success. Response text: {text[:100]}")
+                return JsonResponse(resp_json, status=200)
+            else:
+                print(f"[CareerGPT] {model} failed: {response.text[:200]}")
+
+        print(f"[CareerGPT] All models failed. Last response: {response.text[:300]}")
         return JsonResponse(response.json(), status=response.status_code)

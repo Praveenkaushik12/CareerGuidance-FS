@@ -77,4 +77,14 @@ urlpatterns = [
 
     path('askGemini/',views.ask_gemini,name='askGemini'),
 
+    # Direct messaging between student and counsellor
+    path('sendMessage', views.sendMessage, name='sendMessage'),
+    path('getMessages', views.getMessages, name='getMessages'),
+    path('getCounsellorConversations', views.getCounsellorConversations, name='getCounsellorConversations'),
+
+    # User Profile (all roles)
+    path('getUserProfile', views.getUserProfile, name='getUserProfile'),
+    path('updateUserProfile', views.updateUserProfile, name='updateUserProfile'),
+    path('cancelCounsellorRequest', views.cancelCounsellorRequest, name='cancelCounsellorRequest'),
+
 ]

@@ -8,6 +8,8 @@ import AskCounsellor from './pages/AskCounsellor'
 import Layout from './layouts/Layout'
 import Home from './pages/Home'
 import AboutUs from './pages/AboutUs'
+import Blogs from './pages/Blogs'
+import UserProfile from './pages/UserProfile'
 import OfferCounselling from "./pages/OfferCounselling"
 import CareerGPT from './pages/CareerGPT/CareerGPT'
 import AuthenticateUser from './layouts/AuthenticateUser'
@@ -43,10 +45,16 @@ export default function App() {
             <Route index element={<Home />} />
             <Route path=":id" element={<BlogDetail />} />
             <Route path="about" element={<AboutUs />} />
+            <Route path="blogs" element={<Blogs />} />
             <Route path="signupSuccess" element={<SignupSuccess />} />
-            <Route path="OfferCounselling" element={<OfferCounselling />} />
-            <Route path="askCounsellor" element={<AskCounsellor/>}/>
-            <Route path="chat" element = {<Chat/>}/>
+            {/* Public — no login required */}
+            <Route path="askCounsellor" element={<AskCounsellor />} />
+
+            <Route element={<AuthenticateUser />} >
+              <Route path="OfferCounselling" element={<OfferCounselling />} />
+              <Route path="chat" element = {<Chat/>}/>
+              <Route path="profile" element={<UserProfile />} />
+            </Route>
 
             <Route element={<AuthenticateUser />} >
               <Route path="careerGPT" element={<CareerGPT />} />

@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { fetchBlogsData } from "../features/blogCards/blogCardsSlice"
 import { useDispatch, useSelector } from "react-redux"
 
-export default function BlogCards() {
+export default function Blogs() {
     const dispatch = useDispatch()
     const { blogsDataList } = useSelector(state => state.blogsCard)
 
@@ -12,12 +12,10 @@ export default function BlogCards() {
         dispatch(fetchBlogsData())
     }, [dispatch])
 
-    const topBlogs = blogsDataList ? blogsDataList.slice(0, 4) : []
-
     return (
         <div id="blogCards" className={`${BlogCardsCSS.overAll} mt-5`}>
             <div className={`${BlogCardsCSS.mainHeading} text-center`}>
-                <h1>Popular Blogs</h1>
+                <h1>All Blogs</h1>
             </div>
             <section className={BlogCardsCSS.cardsWrapper}>
                 {!blogsDataList ? (
@@ -27,7 +25,7 @@ export default function BlogCards() {
                         No blogs published yet. Check back soon!
                     </p>
                 ) : (
-                    topBlogs.map(item => (
+                    blogsDataList.map(item => (
                         <div className={BlogCardsCSS.cardGridSpace} key={item.id}>
                             <Link
                                 className={BlogCardsCSS.card}
@@ -44,19 +42,6 @@ export default function BlogCards() {
                     ))
                 )}
             </section>
-            {blogsDataList && blogsDataList.length > 4 && (
-                <div style={{ textAlign: 'center', padding: '16px 0 32px' }}>
-                    <Link to="/blogs" style={{
-                        background: 'linear-gradient(135deg, #1a237e, #3949ab)',
-                        color: '#fff',
-                        padding: '10px 28px',
-                        borderRadius: '8px',
-                        textDecoration: 'none',
-                        fontFamily: 'var(--fontHeading)',
-                        fontSize: '15px',
-                    }}>View All Blogs</Link>
-                </div>
-            )}
         </div>
     )
 }

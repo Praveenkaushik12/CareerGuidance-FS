@@ -6,6 +6,11 @@ class ACU(models.Model):
     password = models.TextField()
     role = models.CharField(default='U', max_length=1)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Student profile fields
+    school = models.TextField(blank=True, default='')
+    stream = models.CharField(max_length=60, blank=True, default='')
+    age = models.PositiveIntegerField(null=True, blank=True)
+    gender = models.CharField(max_length=20, blank=True, default='')
 
     def __str__(self):
         return f'{self.name} - {self.email}'
@@ -83,6 +88,19 @@ class Blogs(models.Model):
     def __str__(self):
         return f'The title for the blog of counsellor {self.counsellor_id} is {self.title}'
     
+
+class Message(models.Model):
+    sender = models.ForeignKey(ACU, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(ACU, on_delete=models.CASCADE, related_name='received_messages')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'{self.sender.name} -> {self.receiver.name}: {self.content[:30]}'
+
 
 class CareerGPTHistory(models.Model):
     user_id = models.ForeignKey(ACU, on_delete=models.CASCADE, related_name='careerGPTHistory')

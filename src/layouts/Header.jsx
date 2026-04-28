@@ -1,154 +1,216 @@
 import HeaderCSS from "../assets/styles/Header.module.css"
-import { Link} from "react-router-dom"
-import { handleModelChange,resetCount,ErrorMsg } from "../features/offerCounselling/offerCounsellingSlice"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { handleModelChange, resetCount, ErrorMsg } from "../features/offerCounselling/offerCounsellingSlice"
 import { setNotificationData } from "../features/header/headerSlice"
-import { useDispatch,useSelector } from "react-redux"
+import { logout, authenticate } from "../features/authentication/authenticationSlice"
+import { useDispatch, useSelector } from "react-redux"
 import React from "react"
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
+import Divider from '@mui/material/Divider'
 import Pusher from "pusher-js"
-export default function Header(){
-   const dispatch = useDispatch()
-   const {notificationData} = useSelector((store) => store.header)
-   const [notification, setNotification] = React.useState(null)
+
+export default function Header() {
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+    const location = useLocation()
+    const { notificationData } = useSelector((store) => store.header)
+    const [notification, setNotification] = React.useState(null)
+    const [profileMenu, setProfileMenu] = React.useState(null)
+    const [menuOpen, setMenuOpen] = React.useState(false)
     const notificationOpen = Boolean(notification)
-    const { user_id, is_exist } = useSelector((store) => store.authentication)
-    
-    
-    const handleNotification = (event) => {
-        setNotification(event.currentTarget)
+    const profileMenuOpen = Boolean(profileMenu)
+    const { user_id, is_exist, role, name, email, counsellor_approved } = useSelector((store) => store.authentication)
+
+    // Sync auth state so header updates immediately after login/logout
+    React.useEffect(() => {
+        dispatch(authenticate())
+    }, [dispatch])
+
+    const handleNotification = (event) => setNotification(event.currentTarget)
+    const handleNotificationClose = () => setNotification(null)
+
+    const handleProfileMenuOpen = (event) => setProfileMenu(event.currentTarget)
+    const handleProfileMenuClose = () => setProfileMenu(null)
+
+    const pusher = new Pusher('66a0704e45889e2fdd5a', { cluster: 'ap1' })
+    const channel = pusher.subscribe('Career_Counselling_portal-development')
+    channel.bind('demo', function (data) {
+        const filteredMessages = data.message.filter((e) => user_id == e.receiver_id)
+        const sortedNotifications = filteredMessages.sort((a, b) => new Date(b.last_message_created_at) - new Date(a.last_message_created_at))
+        dispatch(setNotificationData({ data: sortedNotifications.length > 0 ? sortedNotifications : [] }))
+    })
+
+    const handleLogout = async () => {
+        setMenuOpen(false)
+        handleProfileMenuClose()
+        await dispatch(logout())
+        navigate('/')
     }
 
-    const handleNotificationClose = () => {
-        setNotification(null)
-    }
-    const pusher = new Pusher('66a0704e45889e2fdd5a', {
-        cluster: 'ap1'
-      });
-    const channel = pusher.subscribe('Career_Counselling_portal-development');
-    console.log("Hello from header")
-    channel.bind('demo', function(data) {
+    const isCounsellor = role === 'C' || (role === 'B' && counsellor_approved)
+    const isPendingCounsellor = role === 'B' && !counsellor_approved
+    const dashboardPath = role === 'A' ? '/admin/dashboard' : '/counsellor'
+    // Use name for avatar; fall back to email initial, then 'U'
+    const avatarLetter = (name || email || 'U').charAt(0).toUpperCase()
 
-        console.log("bind", data.message)
-        const filteredMessages = data.message.filter((e) => user_id == e.receiver_id);
-        console.log("Filter", filteredMessages)
-    
-        // Sort notifications based on the timestamp in descending order
-        const sortedNotifications = filteredMessages.sort((a, b) => new Date(b.last_message_created_at) - new Date(a.last_message_created_at));
-    
-        if (sortedNotifications.length > 0) {
-            // Update notification count
-            dispatch(setNotificationData({ data: sortedNotifications }));
-        } else {
-            dispatch(setNotificationData({ data: [] }));
-        }
-    
-       
-    });
-    
-  return (
-    <header className={HeaderCSS.header}>
-        <nav className={` ${HeaderCSS.navigation} navbar navbar-expand-lg`}>
-            <div className="container-fluid d-flex flex-column">
-                <div className="container-fluid d-flex align-items-center justify-content-center">
-                    <Link className={`${HeaderCSS.navbarBrand} navbar-brand`} to=".">
-                        <h1 className={`${HeaderCSS.logoHeading} mt-2`}> ▂▃▅ CareerGuidance ▅▃▂</h1>
+    return (
+        <header className={HeaderCSS.header}>
+            <nav className={`${HeaderCSS.navigation} navbar navbar-expand-lg`}>
+                <div className="container-fluid">
+                    {/* Logo */}
+                    <Link className={`${HeaderCSS.navbarBrand} navbar-brand`} to="/">
+                        <div className={HeaderCSS.logoWrap}>
+                            <i className={`fa-solid fa-book-open ${HeaderCSS.logoIcon}`}></i>
+                            <span className={HeaderCSS.logoHeading}>CareerGuidance</span>
+                        </div>
                     </Link>
-                    <button className={` ${HeaderCSS.navbbarToggler} navbar-toggler ms-auto`} type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+
+                    {/* Mobile toggle */}
+                    <button
+                        className={`${HeaderCSS.navbbarToggler} navbar-toggler`}
+                        type="button"
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        aria-label="Toggle navigation"
+                    >
                         <span className="navbar-toggler-icon"></span>
                     </button>
-                </div>   
 
-                <div className={` ${HeaderCSS.navbarCollapse} navbar-collapse collapse`} id="navbarNav">
-                    <ul className={` ${HeaderCSS.navbarNav} navbar-nav ms-auto d-flex align-items-center`}>
-                        <li className={`${HeaderCSS.navItem} nav-item`}>
-                            <Link to="." className={`${HeaderCSS.navLink} nav-link`}  >Home</Link>
-                        </li>
-                        <li className={`${HeaderCSS.navItem} nav-item`}>
-                            <Link to="askCounsellor" className={`${HeaderCSS.navLink} nav-link`}  >Ask Counsellor</Link>
-                        </li>
-                        <li className={`${HeaderCSS.navItem} nav-item`}>
-                            <Link to="OfferCounselling" className={`${HeaderCSS.navLink} nav-link`}
-                            onClick={(event)=>{
-                                dispatch(handleModelChange())
-                                dispatch(resetCount())
-                                dispatch(ErrorMsg({
-                                    msg:''
-                                }))
-                            }}
-                            >Offer Counselling</Link>
-                        </li>
-                        <li className={`${HeaderCSS.navItem} nav-item`}>
-                            <Link className={`${HeaderCSS.navLink} nav-link`}  to="about">About Us</Link>
-                        </li>
-                        <li className={`${HeaderCSS.navItem} nav-item`}>
-                            <a href="#blogCards" className={`${HeaderCSS.navLink} nav-link`}>Blogs</a>
-                        </li>
-                        <li className={`${HeaderCSS.navItem} nav-item`}>
-                            <a href="#reviews" className={`${HeaderCSS.navLink} nav-link`}>Reviews</a>
-                        </li>
-                          {/* Bell icon at the end */}
-                    
-                          <Link 
-                            className={HeaderCSS.links} 
-                            id="notification-button"
-                            aria-controls={notificationOpen ? 'notification-menu' : undefined}
-                            aria-haspopup="true"
-                            aria-expanded={notificationOpen ? 'true' : undefined}
-                            onClick={handleNotification}
-                        >
-                            
-                            {notificationData && notificationData.length > 0 && notificationData[0].total_unread_message_count > 0 && (
-                                <span className={HeaderCSS.notificationCount}>
-                                    {notificationData[0].total_unread_message_count}
-                                </span>
+                    {/* Nav links */}
+                    <div className={`${HeaderCSS.navbarCollapse} ${menuOpen ? HeaderCSS.menuOpen : ''} navbar-collapse`}>
+                        <ul className={`${HeaderCSS.navbarNav} navbar-nav ms-auto d-flex align-items-center`}>
+                            <li className={`${HeaderCSS.navItem} nav-item`}>
+                                <Link to="/" className={`${HeaderCSS.navLink} nav-link`} onClick={() => setMenuOpen(false)}>Home</Link>
+                            </li>
+                            {/* Counsellors directory — visible to everyone */}
+                            <li className={`${HeaderCSS.navItem} nav-item`}>
+                                <Link to="/askCounsellor" className={`${HeaderCSS.navLink} nav-link`} onClick={() => setMenuOpen(false)}>Counsellors</Link>
+                            </li>
+                            {/* Offer Counselling — hidden for verified counsellors and pending applicants */}
+                            {!isCounsellor && !isPendingCounsellor && (
+                                <li className={`${HeaderCSS.navItem} nav-item`}>
+                                    <Link to="/OfferCounselling" className={`${HeaderCSS.navLink} nav-link`}
+                                        onClick={() => {
+                                            setMenuOpen(false)
+                                            dispatch(handleModelChange())
+                                            dispatch(resetCount())
+                                            dispatch(ErrorMsg({ msg: '' }))
+                                        }}>Offer Counselling</Link>
+                                </li>
                             )}
-                            <span>
-                                <i className={`${HeaderCSS.bellIcon} fa-solid fa-bell`}></i>
-                            </span>
-                        </Link>
-                    <Menu
-                        id="notification-menu"
-                        aria-labelledby="notification-button"
-                        anchorEl={notification}
-                        open={notificationOpen}
-                        onClose={handleNotificationClose}
-                        anchorOrigin={{
-                            vertical: 'top',
-                            horizontal: 'right',
-                        }}
-                        transformOrigin={{
-                            vertical: 'top',
-                            horizontal: 'right',
-                        }}
-                        PaperProps={{
-                            style: {
-                                width: "300px",
-                                backgroundColor: "var(--lightPink)" 
-                            }
-                        }}
-                    >
-                        {notificationData.map((notificationItem, index) => ([
-                            <MenuItem 
-                                key={`menu-item-${index}`}
-                                style={{ 
-                                    whiteSpace: 'normal', 
-                                    fontFamily: "var(--fontHeading)", 
-                                }}
-                            >
-                                You may have {notificationItem.channel_unread_message_count} unread message from {notificationItem.sender_name} and message is {notificationItem.last_message}
-                            </MenuItem>,
-                            index < notificationData.length - 1 && <hr key={`divider-${index}`} />,
-                        ]))}
-                    </Menu>
+                            <li className={`${HeaderCSS.navItem} nav-item`}>
+                                <Link to="/blogs" className={`${HeaderCSS.navLink} nav-link`} onClick={() => setMenuOpen(false)}>Blogs</Link>
+                            </li>
+                            <li className={`${HeaderCSS.navItem} nav-item`}>
+                                <Link to="/about" className={`${HeaderCSS.navLink} nav-link`} onClick={() => setMenuOpen(false)}>About Us</Link>
+                            </li>
 
+                            {/* Dashboard — counsellors and admin only */}
+                            {is_exist && (isCounsellor || role === 'A') && (
+                                <li className={`${HeaderCSS.navItem} nav-item`}>
+                                    <Link to={dashboardPath} className={`${HeaderCSS.dashboardBtn} nav-link`} onClick={() => setMenuOpen(false)}>Dashboard</Link>
+                                </li>
+                            )}
 
-                    </ul>
+                            {/* Login button — guests only */}
+                            {!is_exist && (
+                                <li className={`${HeaderCSS.navItem} nav-item`}>
+                                    <Link to="/login" className={`${HeaderCSS.loginBtn} nav-link`} onClick={() => setMenuOpen(false)}>Login</Link>
+                                </li>
+                            )}
+
+                            {/* Avatar dropdown — logged-in users */}
+                            {is_exist && (
+                                <li className="nav-item" style={{ display: 'flex', alignItems: 'center', margin: '0 4px' }}>
+                                    <button
+                                        className={HeaderCSS.avatarBtn}
+                                        onClick={handleProfileMenuOpen}
+                                        aria-controls={profileMenuOpen ? 'profile-menu' : undefined}
+                                        aria-haspopup="true"
+                                        aria-expanded={profileMenuOpen ? 'true' : undefined}
+                                        aria-label="User menu"
+                                    >
+                                        {avatarLetter}
+                                    </button>
+                                    <Menu
+                                        id="profile-menu"
+                                        anchorEl={profileMenu}
+                                        open={profileMenuOpen}
+                                        onClose={handleProfileMenuClose}
+                                        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                        PaperProps={{
+                                            style: {
+                                                minWidth: 160,
+                                                borderRadius: 10,
+                                                boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem
+                                            onClick={() => { handleProfileMenuClose(); setMenuOpen(false); navigate('/profile') }}
+                                            style={{ fontFamily: "var(--fontHeading)", fontSize: 14, gap: 10 }}
+                                        >
+                                            <i className="fa-solid fa-user" style={{ color: '#3949ab', width: 16 }}></i>
+                                            Profile
+                                        </MenuItem>
+                                        <Divider />
+                                        <MenuItem
+                                            onClick={handleLogout}
+                                            style={{ fontFamily: "var(--fontHeading)", fontSize: 14, color: '#c62828', gap: 10 }}
+                                        >
+                                            <i className="fa-solid fa-right-from-bracket" style={{ width: 16 }}></i>
+                                            Logout
+                                        </MenuItem>
+                                    </Menu>
+                                </li>
+                            )}
+
+                            {/* Bell / notifications */}
+                            <li className="nav-item">
+                                <Link
+                                    className={HeaderCSS.links}
+                                    id="notification-button"
+                                    aria-controls={notificationOpen ? 'notification-menu' : undefined}
+                                    aria-haspopup="true"
+                                    aria-expanded={notificationOpen ? 'true' : undefined}
+                                    onClick={handleNotification}
+                                >
+                                    {notificationData && notificationData.length > 0 && notificationData[0].total_unread_message_count > 0 && (
+                                        <span className={HeaderCSS.notificationCount}>
+                                            {notificationData[0].total_unread_message_count}
+                                        </span>
+                                    )}
+                                    <span><i className={`${HeaderCSS.bellIcon} fa-solid fa-bell`}></i></span>
+                                </Link>
+                                <Menu
+                                    id="notification-menu"
+                                    aria-labelledby="notification-button"
+                                    anchorEl={notification}
+                                    open={notificationOpen}
+                                    onClose={handleNotificationClose}
+                                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                    PaperProps={{ style: { width: "300px", backgroundColor: "var(--lightPink)" } }}
+                                >
+                                    {notificationData && notificationData.length > 0 ? (
+                                        notificationData.map((item, index) => ([
+                                            <MenuItem key={`menu-item-${index}`} style={{ whiteSpace: 'normal', fontFamily: "var(--fontHeading)" }}>
+                                                You may have {item.channel_unread_message_count} unread message from {item.sender_name} and message is {item.last_message}
+                                            </MenuItem>,
+                                            index < notificationData.length - 1 && <hr key={`divider-${index}`} />,
+                                        ]))
+                                    ) : (
+                                        <MenuItem style={{ whiteSpace: 'normal', fontFamily: "var(--fontHeading)", color: '#888', fontSize: 14 }}>
+                                            No new notifications
+                                        </MenuItem>
+                                    )}
+                                </Menu>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-        </nav>      
-    </header>
-  )
+            </nav>
+        </header>
+    )
 }
-

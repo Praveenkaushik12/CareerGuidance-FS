@@ -1,7 +1,7 @@
 import OfferCounsellingCSS from "../assets/styles/OfferCounselling.module.css"
 import Loading from "../assets/images/Loading.gif"
 import { useDispatch, useSelector, useStore } from "react-redux"
-import 
+import
 { handleChange,
   setCount,
   ErrorMsg,
@@ -9,46 +9,23 @@ import
   addWorkingExperience,
   updateWorkingExperience,
   removeWorkingExperience,
-  openOTPModal,
-  checkCounsellorEmail, 
-  sendOTP, 
   registerCounsellor,
   sendVerificationEmail
 } from "../features/offerCounselling/offerCounsellingSlice";
+import { authenticate } from "../features/authentication/authenticationSlice";
 import React from "react";
 import {useNavigate} from "react-router-dom"
-import OTP from "./OTP"
 
 
 export default function OfferCounselling(){
-  //dispatch
+  // All hooks must be called unconditionally — early returns come AFTER
   const dispatch = useDispatch()
-  //useRef to manipluate the DOM elements
   const buttonRef = React.useRef()
-  const navigate = useNavigate();
-
-  //Access current state
+  const navigate = useNavigate()
   const store = useStore()
 
-  //For Sending data to API
-  const formData = new FormData()
-
-  React.useEffect(()=>{
-    buttonRef.current.click()
-  },[])
-
-  //state parameters from offerCounselling State
-  const {offerCounsellorForm,
-        stepCount,
-        errorMsg, 
-        showModel,
-        workingExperience, 
-        isOTPModal,
-        role,
-        isEmailExist,
-        otp,
-        isLoading
-      } = useSelector((store) => store.offerCounselling)
+  const { role: authRole, counsellor_approved, email: sessionEmail } = useSelector((store) => store.authentication)
+  const { offerCounsellorForm, stepCount, errorMsg, showModel, workingExperience, isLoading } = useSelector((store) => store.offerCounselling)
 
   const [images, setImages] = React.useState({
     profilePic: null,
@@ -57,6 +34,64 @@ export default function OfferCounselling(){
     transcript: null,
     certificates: [null]
   })
+
+  React.useEffect(() => {
+    // Always refresh auth state so role is current when page loads
+    dispatch(authenticate())
+  }, [dispatch])
+
+  React.useEffect(() => {
+    // Only trigger the modal and pre-fill email once we know the user is a plain student
+    if (authRole === 'U') {
+      if (buttonRef.current) buttonRef.current.click()
+      if (sessionEmail) {
+        dispatch(handleChange({ name: 'email', value: sessionEmail }))
+      }
+    }
+  }, [authRole, sessionEmail])
+
+  // ── Early returns AFTER all hooks ──
+
+  if (authRole === null) {
+    // Still loading auth state
+    return <div style={{ textAlign: 'center', padding: '80px 20px', color: '#888' }}>Loading…</div>
+  }
+
+  if (authRole === 'B' && !counsellor_approved) {
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <h2>Request Under Review</h2>
+        <p style={{ color: '#555', fontSize: '18px', marginTop: '16px' }}>
+          Your counsellor application has been submitted successfully.<br />
+          Please wait for admin approval. You will receive an email once reviewed.
+        </p>
+      </div>
+    )
+  }
+
+  if (authRole === 'B' && counsellor_approved) {
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <h2>You are already a Counsellor</h2>
+        <p style={{ color: '#555', fontSize: '18px', marginTop: '16px' }}>
+          Your counsellor account is active. Visit your dashboard to manage your profile.
+        </p>
+      </div>
+    )
+  }
+
+  if (authRole === 'C') {
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <h2>You are already a Counsellor</h2>
+        <p style={{ color: '#555', fontSize: '18px', marginTop: '16px' }}>
+          Your counsellor account is active. Visit your dashboard to manage your profile.
+        </p>
+      </div>
+    )
+  }
+
+  const formData = new FormData()
 
   function handleImages(name, fileObj){
     setImages(prevImages => ({
@@ -154,36 +189,6 @@ export default function OfferCounselling(){
                 value: event.target.value
             }))
           }}
-          required
-          />
-        <input className={OfferCounsellingCSS.input}
-          type="email" 
-          name="email" 
-          placeholder="example@gmail.com"
-          value={offerCounsellorForm.email}
-          onChange={(event) => {
-            dispatch(handleChange({
-                name: event.target.name,
-                value: event.target.value
-            }))
-          }}
-          required
-          />
-
-          <input className={OfferCounsellingCSS.input}
-          type="password" 
-          name="password" 
-          placeholder="................."
-          value={offerCounsellorForm.password}
-          onChange={(event) => {
-            dispatch(handleChange({
-                name: event.target.name,
-                value: event.target.value
-            }))
-          }}
-          minLength="8"
-          pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-          title="Password must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters"
           required
           />
 
@@ -320,54 +325,16 @@ export default function OfferCounselling(){
             />
            
         <button className={`${OfferCounsellingCSS.actionButton} next action-button`}
-         onClick={async (event)=>{
-
-          const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-          const emailVerify = emailPattern.test(offerCounsellorForm.email)
-
-          if(emailVerify){
-            await dispatch(checkCounsellorEmail(offerCounsellorForm.email))
-          } else {
-            event.preventDefault()
-            dispatch(ErrorMsg({
-              msg:'Invalid email'
-            }))
-            return
-          }
-
-          let checkEmail = false
-          if(!store.getState().offerCounselling.isEmailExist){
-            checkEmail = true
-          } else if(store.getState().offerCounselling.isEmailExist 
-              && store.getState().offerCounselling.role === 'U')
-            checkEmail  = true
-          else {
-            checkEmail= false
-          }
-
-          if(!checkEmail){
-            dispatch(ErrorMsg({
-              msg:'Email Already in use'
-            }))
-            return
-          }
-
+         onClick={(event) => {
           if ((offerCounsellorForm.gender === "male" || offerCounsellorForm.gender === "female") &&
-              offerCounsellorForm.name !== "" && offerCounsellorForm.password !== "" &&
+              offerCounsellorForm.name !== "" &&
               offerCounsellorForm.cnic !== "" && offerCounsellorForm.phoneNo !== "" &&
               images.cnicFrontImg !== null && images.cnicBackImg !== null && images.profilePic !== null){
-              dispatch(ErrorMsg({
-                msg:''
-              }))
-              dispatch(setCount({
-                value:2
-              }))
-          }
-          else {
-            event.preventDefault(); 
-            dispatch(ErrorMsg({
-              msg:'please fill all the required details'
-            }))
+              dispatch(ErrorMsg({ msg: '' }))
+              dispatch(setCount({ value: 2 }))
+          } else {
+            event.preventDefault()
+            dispatch(ErrorMsg({ msg: 'Please fill all the required details' }))
           }
          }}
          >Next
@@ -596,27 +563,23 @@ export default function OfferCounselling(){
 
             if (allDetailsFilled) {
               dispatch(ErrorMsg({ msg: '' }))
-              if(!isEmailExist){
-                await dispatch(sendOTP(offerCounsellorForm.email))
-                dispatch(openOTPModal())
-              } else{
-                formData.append('offerCounsellorForm', JSON.stringify(offerCounsellorForm))
-                formData.append('profilePic', images.profilePic)
-                formData.append('cnicFrontImg', images.cnicFrontImg)
-                formData.append('cnicBackImg', images.cnicBackImg)
-                formData.append('transcript', images.transcript)
-                images.certificates.forEach((certificate, index) => {
-                  formData.append(`certificates[${index}]`, certificate);
-                })
-                await dispatch(registerCounsellor(formData))
-                await dispatch(sendVerificationEmail(
-                  {'email': offerCounsellorForm.email, 'name': offerCounsellorForm.name}))
-                navigate("/signupSuccess", {replace : true})
-                window.location.reload()
-              }
+              formData.append('offerCounsellorForm', JSON.stringify(offerCounsellorForm))
+              formData.append('profilePic', images.profilePic)
+              formData.append('cnicFrontImg', images.cnicFrontImg)
+              formData.append('cnicBackImg', images.cnicBackImg)
+              formData.append('transcript', images.transcript)
+              images.certificates.forEach((certificate, index) => {
+                formData.append(`certificates[${index}]`, certificate)
+              })
+              await dispatch(registerCounsellor(formData))
+              await dispatch(sendVerificationEmail(
+                {'email': offerCounsellorForm.email, 'name': offerCounsellorForm.name}))
+              // Re-sync auth so navbar hides "Offer Counselling" immediately
+              await dispatch(authenticate())
+              navigate("/signupSuccess", { replace: true })
             } else {
-              event.preventDefault();
-                dispatch(ErrorMsg({ msg: 'please fill all the required details' }))
+              event.preventDefault()
+              dispatch(ErrorMsg({ msg: 'Please fill all the required details' }))
             }
           }}
         >
@@ -640,13 +603,6 @@ export default function OfferCounselling(){
     </form>
    </div>
 
-   {isOTPModal && 
-      <OTP 
-        offerCounsellorForm={offerCounsellorForm}
-        images={images} 
-        otp={otp} 
-        role="counsellor" />
-    }
   </>
   )
 }
