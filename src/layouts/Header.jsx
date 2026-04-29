@@ -111,6 +111,12 @@ export default function Header() {
                                 <Link to="/blogs" className={`${HeaderCSS.navLink} nav-link`} onClick={() => setMenuOpen(false)}>Blogs</Link>
                             </li>
                             <li className={`${HeaderCSS.navItem} nav-item`}>
+                                <Link to="/careerExploration" className={`${HeaderCSS.navLink} nav-link`} onClick={() => setMenuOpen(false)}>Explore</Link>
+                            </li>
+                            <li className={`${HeaderCSS.navItem} nav-item`}>
+                                <Link to="/resourceHub" className={`${HeaderCSS.navLink} nav-link`} onClick={() => setMenuOpen(false)}>Resources</Link>
+                            </li>
+                            <li className={`${HeaderCSS.navItem} nav-item`}>
                                 <Link to="/about" className={`${HeaderCSS.navLink} nav-link`} onClick={() => setMenuOpen(false)}>About Us</Link>
                             </li>
 

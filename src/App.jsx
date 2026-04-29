@@ -14,6 +14,8 @@ import Blogs from './pages/Blogs'
 import UserProfile from './pages/UserProfile'
 import OfferCounselling from "./pages/OfferCounselling"
 import CareerGPT from './pages/CareerGPT/CareerGPT'
+import CareerExploration from './pages/CareerExploration'
+import ResourceHub from './pages/ResourceHub'
 import AuthenticateUser from './layouts/AuthenticateUser'
 import AuthenticateCounsellor from './layouts/AuthenticateCounsellor'
 import AuthenticateAdmin from './layouts/AuthenticateAdmin'
@@ -51,6 +53,8 @@ export default function App() {
             {/* Public — no login required */}
             <Route path="askCounsellor" element={<AskCounsellor />} />
             <Route path="careerAssessment" element={<CareerAssessment />} />
+            <Route path="careerExploration" element={<CareerExploration />} />
+            <Route path="resourceHub" element={<ResourceHub />} />
 
             <Route element={<AuthenticateUser />} >
               <Route path="OfferCounselling" element={<OfferCounselling />} />
