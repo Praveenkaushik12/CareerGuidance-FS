@@ -84,10 +84,15 @@ urlpatterns = [
     path('sendMessage', views.sendMessage, name='sendMessage'),
     path('getMessages', views.getMessages, name='getMessages'),
     path('getCounsellorConversations', views.getCounsellorConversations, name='getCounsellorConversations'),
+    path('markMessagesRead', views.markMessagesRead, name='markMessagesRead'),
 
     # User Profile (all roles)
     path('getUserProfile', views.getUserProfile, name='getUserProfile'),
     path('updateUserProfile', views.updateUserProfile, name='updateUserProfile'),
     path('cancelCounsellorRequest', views.cancelCounsellorRequest, name='cancelCounsellorRequest'),
 
+    # Forgot / Reset Password
+    path('forgotPasswordSendOTP', views.forgotPasswordSendOTP, name='forgotPasswordSendOTP'),
+    path('forgotPasswordVerifyOTP', views.forgotPasswordVerifyOTP, name='forgotPasswordVerifyOTP'),
+    path('forgotPasswordReset', views.forgotPasswordReset, name='forgotPasswordReset'),
 ]

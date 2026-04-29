@@ -3,6 +3,7 @@ import "./assets/styles/Global.module.css"
 import Signup from "./pages/Signup"
 import SignupSuccess from './pages/SignupSuccess'
 import Login from "./pages/Login"
+import ForgotPassword from "./pages/ForgotPassword"
 import BlogDetail from './pages/BlogDetail'
 import AskCounsellor from './pages/AskCounsellor'
 import CareerAssessment from './pages/CareerAssessment/CareerAssessment'
@@ -16,7 +17,6 @@ import CareerGPT from './pages/CareerGPT/CareerGPT'
 import AuthenticateUser from './layouts/AuthenticateUser'
 import AuthenticateCounsellor from './layouts/AuthenticateCounsellor'
 import AuthenticateAdmin from './layouts/AuthenticateAdmin'
-import Chat from './pages/Chat'
 //Admin Dashboard
 import AdminLayout from './dashboards/admin/layouts/Layout'
 import  DashBoard  from './dashboards/admin/pages/Index'
@@ -54,7 +54,6 @@ export default function App() {
 
             <Route element={<AuthenticateUser />} >
               <Route path="OfferCounselling" element={<OfferCounselling />} />
-              <Route path="chat" element = {<Chat/>}/>
               <Route path="profile" element={<UserProfile />} />
             </Route>
 
@@ -62,8 +61,9 @@ export default function App() {
               <Route path="careerGPT" element={<CareerGPT />} />
             </Route>
 
-            <Route path="login" element={<Login />} />  
+            <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
+            <Route path="forgotPassword" element={<ForgotPassword />} />
             <Route path="blogDetail" element={<BlogDetail />} />
           </Route>
 

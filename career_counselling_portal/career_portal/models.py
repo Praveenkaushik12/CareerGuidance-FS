@@ -94,6 +94,7 @@ class Message(models.Model):
     receiver = models.ForeignKey(ACU, on_delete=models.CASCADE, related_name='received_messages')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['created_at']

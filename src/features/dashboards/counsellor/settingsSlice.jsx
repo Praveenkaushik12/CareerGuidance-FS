@@ -76,7 +76,9 @@ const settingsSlice = createSlice({
             state.settings.name = action.payload.counsellorData.name
             state.settings.profilePic = action.payload.counsellorData.profile_pic
             state.settings.email = action.payload.counsellorData.email
-            state.settings.phoneNo = action.payload.counsellorData.phone_no
+            const raw = action.payload.counsellorData.phone_no || ''
+            const digits = raw.replace(/^\+\d{1,4}-/, '').replace(/\D/g, '').slice(0, 10)
+            state.settings.phoneNo = digits ? `+91-${digits}` : ''
         })
         .addCase(getCounsellorSettings.rejected, (state, action) => {
             //console.log("getCounsellorSettings rejected")

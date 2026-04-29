@@ -16,8 +16,12 @@
   border:1px solid black;
 }
 .starsFilled{
-  color:var(--purple);
-  font-size:20px; 
+  color: #fdd835;
+  font-size:16px;
+}
+.starEmpty{
+  color:#ddd;
+  font-size:16px;
 }
 .ChatButton {
   font-weight: bold;
@@ -42,6 +46,7 @@
 [data-theme="dark"] .MainDiv { background: linear-gradient(160deg, #0f0f1a 0%, #1a0030 100%); }
 [data-theme="dark"] .CounsellorsHeading { color: var(--yellow); }
 [data-theme="dark"] .CounsellorCard { background: #1a1a2e !important; color: #e8eaf6 !important; }
+[data-theme="dark"] .starEmpty { color: #444; }
 
 @media (max-width:765px)
 {

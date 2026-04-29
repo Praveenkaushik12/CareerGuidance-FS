@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { useSelector, useDispatch } from "react-redux"
 import { authenticate } from "../features/authentication/authenticationSlice"
+import defaultAvatar from "../assets/images/default_avatar.svg"
 
 axios.defaults.withCredentials = true
 const BASE = "http://127.0.0.1:8000"
@@ -68,9 +69,12 @@ function CounsellorProfile({ profile }) {
             {/* ── Left column ── */}
             <div style={s.leftCol}>
                 <div style={s.avatarWrap}>
-                    {profilePicSrc
-                        ? <img src={profilePicSrc} alt="Profile" style={s.avatarImg} />
-                        : <div style={s.avatarInitials}>{profile.name.charAt(0).toUpperCase()}</div>}
+                    <img
+                        src={profilePicSrc || defaultAvatar}
+                        alt="Profile"
+                        style={s.avatarImg}
+                        onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = defaultAvatar; }}
+                    />
                     <button style={s.changePicBtn} type="button" onClick={() => fileRef.current.click()}>
                         Change Photo
                     </button>
@@ -200,7 +204,7 @@ function StudentProfile({ profile, isPending }) {
     return (
         <div style={{ maxWidth: 520, margin: "0 auto" }}>
             <div style={s.avatarWrap}>
-                <div style={s.avatarInitials}>{initials}</div>
+                <img src={defaultAvatar} alt="Profile" style={s.avatarImg} />
                 {isPending
                     ? <div style={{ ...s.roleTag, background: "linear-gradient(135deg, #e65100, #ef6c00)" }}>Counsellor Request Pending</div>
                     : <div style={s.roleTag}>Student</div>}

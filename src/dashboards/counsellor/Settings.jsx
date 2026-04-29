@@ -1,5 +1,6 @@
 import SettingsCSS from "../../assets/styles/dashboards/counsellor_css/Settings.module.css"
 import Loading from "../../assets/images/Loading.gif"
+import defaultAvatar from "../../assets/images/default_avatar.svg"
 import { useDispatch, useSelector } from "react-redux"
 import { useParams } from "react-router-dom"
 import React from 'react'
@@ -36,8 +37,12 @@ export default function Settings() {
         <div className={`${SettingsCSS.inner} container`}>
             <div className="row">
                 <div className={`col-md-4 col-sm-12 ${SettingsCSS.form}`}>
-                    {!picURL && <img src={`../../../career_counselling_portal/Counsellors/${settings.email}${settings.profilePic}`} className={`rounded-circle mb-3 ${SettingsCSS.avatarImage}`} alt="Avatar" />}
-                    {picURL && <img src={picURL} className={`rounded-circle mb-3 ${SettingsCSS.avatarImage}`} alt="Avatar" />}
+                    <img
+                        src={picURL || `../../../career_counselling_portal/Counsellors/${settings.email}${settings.profilePic}`}
+                        className={`rounded-circle mb-3 ${SettingsCSS.avatarImage}`}
+                        alt="Avatar"
+                        onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = defaultAvatar; }}
+                    />
                     <input 
                         type="file" 
                         name="pic" 
@@ -89,20 +94,12 @@ export default function Settings() {
                     <input
                         type="tel"
                         className={SettingsCSS.formControl}
-                        placeholder="Phone Number"
-                        pattern="\+\d{1,4}-\d{1,10}"
-                        title="Enter a valid phone number in the format: +91-number (e.g., +91-9876543210)"
+                        placeholder="+91-XXXXXXXXXX"
                         name="phoneNo"
                         value={settings.phoneNo}
                         onChange={(event) => {
-                            const enteredNumber = event.target.value.replace(/\+\d{1,4}-/, '');
-                            const limitedNumber = enteredNumber.slice(0, 10);
-                            dispatch(
-                              handleChange({
-                                name: event.target.name,
-                                value: `+91-${limitedNumber}`,
-                              })
-                            )
+                            const digits = event.target.value.replace(/^\+\d{1,4}-/, '').replace(/\D/g, '').slice(0, 10);
+                            dispatch(handleChange({ name: event.target.name, value: `+91-${digits}` }))
                         }}
                     />
                 </div>

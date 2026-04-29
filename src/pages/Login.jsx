@@ -101,6 +101,9 @@ export default function Login() {
               Not a member?
               <Link to="/signup">Signup</Link>
             </p>
+            <p style={{ textAlign: "center", fontFamily: "var(--fontHeading)", fontSize: 14, marginTop: 8 }}>
+              <Link to="/forgotPassword" style={{ color: "#3949ab" }}>Forgot password?</Link>
+            </p>
           </form>
         </div>
       </div>

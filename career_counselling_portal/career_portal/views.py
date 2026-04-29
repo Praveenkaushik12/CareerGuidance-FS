@@ -1117,10 +1117,37 @@ def getCounsellorConversations(request):
         sent_to = Message.objects.filter(sender_id=user_id).values_list('receiver_id', flat=True)
         received_from = Message.objects.filter(receiver_id=user_id).values_list('sender_id', flat=True)
         partner_ids = set(list(sent_to) + list(received_from))
-        partners = ACU.objects.filter(id__in=partner_ids).values(
+        partners = list(ACU.objects.filter(id__in=partner_ids).values(
             'id', 'name', 'email', 'school', 'stream', 'age', 'gender'
-        )
-        return JsonResponse({'conversations': list(partners)})
+        ))
+        # Attach last_message_at, last_message, and unread_count per partner
+        for p in partners:
+            last_msg = Message.objects.filter(
+                Q(sender_id=user_id, receiver_id=p['id']) |
+                Q(sender_id=p['id'], receiver_id=user_id)
+            ).order_by('-created_at').values('created_at', 'content').first()
+            p['last_message_at'] = str(last_msg['created_at']) if last_msg else ''
+            p['last_message'] = last_msg['content'] if last_msg else ''
+            # Count messages sent by this partner that the counsellor hasn't read yet
+            p['unread_count'] = Message.objects.filter(
+                sender_id=p['id'], receiver_id=user_id, is_read=False
+            ).count()
+        # Sort by most recent message first
+        partners.sort(key=lambda x: x['last_message_at'], reverse=True)
+        return JsonResponse({'conversations': partners})
+    return JsonResponse({'message': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def markMessagesRead(request):
+    if request.method == 'POST':
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return JsonResponse({'message': 'Not logged in'}, status=401)
+        data = json.loads(request.body.decode('utf-8'))
+        sender_id = data.get('sender_id')
+        Message.objects.filter(sender_id=sender_id, receiver_id=user_id, is_read=False).update(is_read=True)
+        return JsonResponse({'status': 'ok'})
     return JsonResponse({'message': 'Method not allowed'}, status=405)
 
 
@@ -1430,3 +1457,89 @@ def assessCareer(request):
         return JsonResponse({"error": f"Assessment service unavailable. Detail: {err}"}, status=503)
 
     return JsonResponse({"result": text}, status=200)
+
+
+# ── Forgot / Reset Password ──────────────────────────────────────────────────
+
+@csrf_exempt
+def forgotPasswordSendOTP(request):
+    """Step 1: check email exists, generate OTP, email it, store in session."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        email = data.get('email', '').strip()
+        if not email:
+            return JsonResponse({'status': 'error', 'message': 'Email is required'}, status=400)
+
+        try:
+            ACU.objects.get(email=email)
+        except ACU.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'No account found with that email'}, status=404)
+
+        otp = generate_otp()
+        request.session['reset_otp'] = otp
+        request.session['reset_email'] = email
+
+        send_mail(
+            'Password Reset Code',
+            f'Your password reset code is: {otp}\n\nThis code is valid for your current session.',
+            from_email='noreplytestprofile@gmail.com',
+            recipient_list=[email],
+        )
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt
+def forgotPasswordVerifyOTP(request):
+    """Step 2: verify the OTP the user entered."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        entered = str(data.get('otp', '')).strip()
+        stored = request.session.get('reset_otp')
+        email = request.session.get('reset_email')
+        if not stored or not email:
+            return JsonResponse({'status': 'error', 'message': 'OTP expired or not requested'}, status=400)
+        if entered != stored:
+            return JsonResponse({'status': 'error', 'message': 'Incorrect OTP'}, status=400)
+        # Mark OTP as verified so the reset step can proceed
+        request.session['reset_otp_verified'] = True
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt
+def forgotPasswordReset(request):
+    """Step 3: set the new password (requires verified OTP in session)."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+    try:
+        if not request.session.get('reset_otp_verified'):
+            return JsonResponse({'status': 'error', 'message': 'OTP not verified'}, status=400)
+        email = request.session.get('reset_email')
+        if not email:
+            return JsonResponse({'status': 'error', 'message': 'Session expired'}, status=400)
+
+        data = json.loads(request.body.decode('utf-8'))
+        new_password = data.get('password', '')
+        if len(new_password) < 6:
+            return JsonResponse({'status': 'error', 'message': 'Password must be at least 6 characters'}, status=400)
+
+        user = ACU.objects.get(email=email)
+        user.password = make_password(new_password)
+        user.save()
+
+        # Clean up session keys
+        for key in ('reset_otp', 'reset_email', 'reset_otp_verified'):
+            request.session.pop(key, None)
+
+        return JsonResponse({'status': 'success'})
+    except ACU.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'User not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

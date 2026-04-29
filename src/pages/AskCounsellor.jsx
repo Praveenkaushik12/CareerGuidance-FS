@@ -1,6 +1,7 @@
 import AskCounsellorCSS from "../assets/styles/AskCounsellor.module.css";
 import { getTopCounsellors } from "../features/askCounsellor/askCounsellorSlice";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
+import defaultAvatar from "../assets/images/default_avatar.svg";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { authenticate } from "../features/authentication/authenticationSlice";
@@ -13,7 +14,7 @@ const BASE = "http://127.0.0.1:8000";
 const STREAMS = ["Science", "Arts", "Commerce", "Computer Science", "Medical", "Engineering", "Other"];
 const GENDERS = ["Male", "Female", "Other", "Prefer not to say"];
 
-// ── Profile gate modal (collect school/stream/age/gender before first chat) ──
+// ── Profile gate modal ──
 
 function ProfileGateModal({ onSave, onCancel, saving, error }) {
   const [form, setForm] = useState({ school: "", stream: "", age: "", gender: "" });
@@ -85,6 +86,173 @@ function PendingCounsellorModal({ onCancel, onWithdraw, withdrawing, error }) {
   );
 }
 
+// ── Star generator ──
+
+function Stars({ rating }) {
+  return (
+    <span>
+      {[1, 2, 3, 4, 5].map(i => (
+        <span
+          key={i}
+          className={`fa-solid fa-star ${i <= rating ? AskCounsellorCSS.starsFilled : AskCounsellorCSS.starEmpty}`}
+        />
+      ))}
+      <span style={{ fontSize: 13, color: "#888", marginLeft: 6, fontWeight: 500 }}>
+        {rating ? Number(rating).toFixed(1) : "No rating"}
+      </span>
+    </span>
+  );
+}
+
+// ── Search + Filter bar ──
+
+function FilterBar({ search, onSearch, fieldFilter, onField, ratingFilter, onRating, fields }) {
+  return (
+    <div style={fb.wrap}>
+      {/* Search */}
+      <div style={fb.inputWrap}>
+        <i className="fa-solid fa-magnifying-glass" style={fb.icon} />
+        <input
+          style={fb.input}
+          placeholder="Search by name or specialty…"
+          value={search}
+          onChange={e => onSearch(e.target.value)}
+        />
+        {search && (
+          <button style={fb.clear} onClick={() => onSearch("")} title="Clear">✕</button>
+        )}
+      </div>
+
+      {/* Field filter */}
+      <select style={fb.select} value={fieldFilter} onChange={e => onField(e.target.value)}>
+        <option value="">All fields</option>
+        {fields.map(f => <option key={f} value={f}>{f}</option>)}
+      </select>
+
+      {/* Min rating filter */}
+      <select style={fb.select} value={ratingFilter} onChange={e => onRating(e.target.value)}>
+        <option value="">Any rating</option>
+        <option value="4">4+ stars</option>
+        <option value="3">3+ stars</option>
+        <option value="2">2+ stars</option>
+      </select>
+    </div>
+  );
+}
+
+const fb = {
+  wrap: {
+    display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 28,
+    alignItems: "center", justifyContent: "center",
+  },
+  inputWrap: {
+    position: "relative", display: "flex", alignItems: "center",
+    flex: "1 1 260px", maxWidth: 360,
+  },
+  icon: {
+    position: "absolute", left: 12, color: "#3949ab", fontSize: 14,
+  },
+  input: {
+    width: "100%", border: "1.5px solid #c5cae9", borderRadius: 10,
+    padding: "10px 36px 10px 36px", fontSize: 14,
+    fontFamily: "var(--fontHeading)", outline: "none", background: "#fff",
+  },
+  clear: {
+    position: "absolute", right: 10, background: "none", border: "none",
+    cursor: "pointer", color: "#999", fontSize: 16, lineHeight: 1,
+  },
+  select: {
+    border: "1.5px solid #c5cae9", borderRadius: 10, padding: "10px 14px",
+    fontSize: 14, fontFamily: "var(--fontHeading)", outline: "none",
+    background: "#fff", cursor: "pointer", minWidth: 130,
+    color: "#444",
+  },
+};
+
+// ── Counsellor Card ──
+
+function CounsellorCard({ counsellor, isCounsellor, onChat }) {
+  return (
+    <div className={`card ${AskCounsellorCSS.CounsellorCard}`} style={{ height: "100%" }}>
+      <div className="row no-gutters" style={{ height: "100%" }}>
+        {/* Photo column */}
+        <div className="col-md-4 d-flex flex-column justify-content-center align-items-center" style={{ padding: "20px 10px" }}>
+          <img
+            src={`/career_counselling_portal/Counsellors/${counsellor.email}/${counsellor.profile_pic}`}
+            className={`${AskCounsellorCSS.image} card-img rounded-circle`}
+            alt={counsellor.name}
+            style={{ width: 90, height: 90, objectFit: "cover" }}
+            onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = defaultAvatar; }}
+          />
+          {/* Rating badge under photo */}
+          <div style={card.ratingBadge}>
+            <i className="fa-solid fa-star" style={{ color: "#fdd835", fontSize: 13, marginRight: 4 }} />
+            {counsellor.avg_rating ? Number(counsellor.avg_rating).toFixed(1) : "—"}
+          </div>
+        </div>
+
+        {/* Info column */}
+        <div className="col-md-8">
+          <div className="card-body" style={{ padding: "18px 16px 14px" }}>
+            <h5 className="card-title" style={{ marginBottom: 4, fontSize: 17, fontWeight: 700 }}>
+              {counsellor.name}
+            </h5>
+
+            {/* Specialty chip */}
+            <div style={card.chip}>
+              <i className="fa-solid fa-graduation-cap" style={{ fontSize: 11, marginRight: 5 }} />
+              {counsellor.qualification} · {counsellor.field_of_study}
+            </div>
+
+            {/* Stars */}
+            <div style={{ marginBottom: 8 }}>
+              <Stars rating={counsellor.avg_rating} />
+            </div>
+
+            {/* Last review snippet */}
+            {counsellor.review_description && (
+              <p style={card.review}>
+                <i className="fa-solid fa-quote-left" style={{ fontSize: 10, marginRight: 5, opacity: 0.5 }} />
+                {counsellor.review_description}
+              </p>
+            )}
+
+            {!isCounsellor && (
+              <button
+                onClick={() => onChat(counsellor)}
+                className={`btn ${AskCounsellorCSS.ChatButton}`}
+                style={{ marginTop: 8, fontSize: 13, padding: "7px 16px" }}
+              >
+                <i className="fa-solid fa-comment-dots" style={{ marginRight: 6 }} />
+                Chat with {counsellor.name.split(" ")[0]}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const card = {
+  ratingBadge: {
+    marginTop: 8, background: "#1a237e", color: "#fff", borderRadius: 20,
+    padding: "3px 10px", fontSize: 12, fontFamily: "var(--fontHeading)", fontWeight: 600,
+    display: "flex", alignItems: "center",
+  },
+  chip: {
+    display: "inline-block", background: "#e8eaf6", color: "#3949ab",
+    borderRadius: 20, padding: "3px 10px", fontSize: 12,
+    fontFamily: "var(--fontHeading)", marginBottom: 8, fontWeight: 600,
+  },
+  review: {
+    fontSize: 12, color: "#666", fontStyle: "italic",
+    lineHeight: 1.5, marginBottom: 4,
+    display: "-webkit-box", WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical", overflow: "hidden",
+  },
+};
+
 // ── Main component ──
 
 export default function AskCounsellor() {
@@ -93,22 +261,23 @@ export default function AskCounsellor() {
 
   const [activeCounsellor, setActiveCounsellor] = useState(null);
   const [pendingCounsellor, setPendingCounsellor] = useState(null);
-
-  // Which modal is open: null | 'pending' | 'gate'
-  const [modal, setModal] = useState(null);
+  const [modal, setModal] = useState(null); // null | 'pending' | 'gate'
 
   const [gateSaving, setGateSaving] = useState(false);
   const [gateError, setGateError] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawError, setWithdrawError] = useState(false);
 
+  // Filter state
+  const [search, setSearch] = useState("");
+  const [fieldFilter, setFieldFilter] = useState("");
+  const [ratingFilter, setRatingFilter] = useState("");
+
   const profileRef = useRef(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Verified counsellors browse only — no chat
   const isCounsellor = role === 'C' || (role === 'B' && counsellor_approved);
-  // Pending applicant: submitted but not yet approved
   const isPendingCounsellor = role === 'B' && !counsellor_approved;
 
   useEffect(() => {
@@ -116,7 +285,6 @@ export default function AskCounsellor() {
     dispatch(authenticate());
   }, [dispatch]);
 
-  // Pre-fetch student profile to know if gate is needed
   useEffect(() => {
     if (is_exist && !isCounsellor) {
       axios.get(`${BASE}/getUserProfile`)
@@ -125,27 +293,36 @@ export default function AskCounsellor() {
     }
   }, [is_exist, isCounsellor]);
 
-  const generateStars = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <span key={i} className={`fa-solid fa-star ${i <= rating ? AskCounsellorCSS.starsFilled : AskCounsellorCSS.starEmpty}`}></span>
-      );
-    }
-    return stars;
-  };
+  // Unique field-of-study values for the filter dropdown
+  const uniqueFields = useMemo(() => {
+    if (!topCounsellorsList) return [];
+    return [...new Set(topCounsellorsList.map(c => c.field_of_study).filter(Boolean))].sort();
+  }, [topCounsellorsList]);
+
+  // Filtered & searched list
+  const filteredList = useMemo(() => {
+    if (!topCounsellorsList) return [];
+    return topCounsellorsList.filter(c => {
+      const q = search.toLowerCase();
+      const matchSearch = !q ||
+        c.name?.toLowerCase().includes(q) ||
+        c.field_of_study?.toLowerCase().includes(q) ||
+        c.qualification?.toLowerCase().includes(q);
+      const matchField = !fieldFilter || c.field_of_study === fieldFilter;
+      const matchRating = !ratingFilter || (c.avg_rating && Number(c.avg_rating) >= Number(ratingFilter));
+      return matchSearch && matchField && matchRating;
+    });
+  }, [topCounsellorsList, search, fieldFilter, ratingFilter]);
 
   const handleChatButtonClick = (counsellor) => {
     if (!is_exist) { navigate("/login"); return; }
 
-    // Pending counsellor applicant → show withdrawal confirmation
     if (isPendingCounsellor) {
       setPendingCounsellor(counsellor);
       setModal('pending');
       return;
     }
 
-    // Normal student → check if profile is filled
     const p = profileRef.current;
     const needsProfile = !p || !p.school || !p.stream || !p.age || !p.gender;
     if (needsProfile) {
@@ -156,16 +333,13 @@ export default function AskCounsellor() {
     }
   };
 
-  // User chose to withdraw their counsellor application
   const handleWithdraw = async () => {
     setWithdrawing(true);
     setWithdrawError(false);
     try {
       await axios.post(`${BASE}/cancelCounsellorRequest`);
-      // Re-sync auth state so role updates to 'U' everywhere
       await dispatch(authenticate());
       setModal(null);
-      // Now check if profile gate is needed
       const p = profileRef.current;
       const needsProfile = !p || !p.school || !p.stream || !p.age || !p.gender;
       if (needsProfile) {
@@ -181,14 +355,12 @@ export default function AskCounsellor() {
     }
   };
 
-  // User chose not to withdraw
   const handleKeepRequest = () => {
     setModal(null);
     setPendingCounsellor(null);
     setWithdrawError(false);
   };
 
-  // Profile gate saved
   const handleGateSave = async (form) => {
     setGateSaving(true);
     setGateError(false);
@@ -216,67 +388,95 @@ export default function AskCounsellor() {
     setGateError(false);
   };
 
+  const hasFilters = search || fieldFilter || ratingFilter;
+
   return (
     <main role="main" className={AskCounsellorCSS.MainDiv}>
-      <div className="text-center m-3">
-        <h1 className={AskCounsellorCSS.CounsellorsHeading}>
-          {isCounsellor ? "Browse Counsellors" : "CareerGuidance Counsellors"}
-        </h1>
-        {isCounsellor && (
-          <p style={{ color: "#888", fontSize: 14, fontFamily: "var(--fontHeading)", marginTop: 4 }}>
-            Browse and view counsellor profiles.
+      {/* ── Hero section ── */}
+      <div style={hero.wrap}>
+        <div style={hero.inner}>
+          <h1 style={hero.title}>
+            {isCounsellor ? "Browse Counsellors" : "Find Your Perfect Counsellor"}
+          </h1>
+          <p style={hero.sub}>
+            {isCounsellor
+              ? "View and explore counsellor profiles on the platform."
+              : "Connect with expert career counsellors and get personalised guidance for your future."}
           </p>
-        )}
-        <hr className={AskCounsellorCSS.mainHR} />
-      </div>
-
-      <div className="container">
-        <div className="row">
-          {topCounsellorsList &&
-            topCounsellorsList.map((counsellor) => (
-              <div className="col-md-6 mb-4" key={counsellor.id}>
-                <div className={`card ${AskCounsellorCSS.CounsellorCard}`}>
-                  <div className="row no-gutters">
-                    <div className="col-md-4 d-flex justify-content-center align-items-center">
-                      <img
-                        src={`/career_counselling_portal/Counsellors/${counsellor.email}/${counsellor.profile_pic}`}
-                        className={`${AskCounsellorCSS.image} card-img rounded-circle ms-4 mt-3`}
-                        alt="Counselor"
-                      />
-                    </div>
-                    <div className="col-md-8">
-                      <div className="card-body">
-                        <h5 className="card-title"><strong>{counsellor.name}</strong></h5>
-                        <p className="card-text">
-                          <strong>Specialty:</strong>{" "}
-                          {counsellor.qualification} in {counsellor.field_of_study}
-                        </p>
-                        <p className="card-text">
-                          <strong>Last Review:</strong> {counsellor.review_description}
-                        </p>
-                        <p className="card-text">
-                          <strong>Rating:</strong> {generateStars(counsellor.avg_rating)}
-                        </p>
-
-                        {/* Verified counsellors: view only */}
-                        {isCounsellor ? null : (
-                          <button
-                            onClick={() => handleChatButtonClick(counsellor)}
-                            className={`btn ${AskCounsellorCSS.ChatButton}`}
-                          >
-                            💬 Chat With {counsellor.name}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          {/* Stats bar */}
+          {topCounsellorsList && (
+            <div style={hero.statsRow}>
+              <div style={hero.stat}>
+                <span style={hero.statNum}>{topCounsellorsList.length}</span>
+                <span style={hero.statLabel}>Counsellors</span>
               </div>
-            ))}
+              <div style={hero.statDivider} />
+              <div style={hero.stat}>
+                <span style={hero.statNum}>{uniqueFields.length}</span>
+                <span style={hero.statLabel}>Specialties</span>
+              </div>
+              <div style={hero.statDivider} />
+              <div style={hero.stat}>
+                <span style={hero.statNum}>
+                  {topCounsellorsList.filter(c => c.avg_rating >= 4).length}
+                </span>
+                <span style={hero.statLabel}>Top Rated</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Pending counsellor withdrawal confirmation */}
+      <div className="container" style={{ paddingTop: 8 }}>
+        {/* ── Filter bar ── */}
+        <FilterBar
+          search={search} onSearch={setSearch}
+          fieldFilter={fieldFilter} onField={setFieldFilter}
+          ratingFilter={ratingFilter} onRating={setRatingFilter}
+          fields={uniqueFields}
+        />
+
+        {/* ── Results count ── */}
+        {topCounsellorsList && (
+          <div style={{ fontSize: 13, color: "#888", marginBottom: 16, fontFamily: "var(--fontHeading)" }}>
+            {hasFilters
+              ? `${filteredList.length} of ${topCounsellorsList.length} counsellors`
+              : `${topCounsellorsList.length} counsellors`}
+          </div>
+        )}
+
+        {/* ── Cards grid ── */}
+        <div className="row">
+          {filteredList.length > 0
+            ? filteredList.map((counsellor) => (
+              <div className="col-md-6 mb-4" key={counsellor.id}>
+                <CounsellorCard
+                  counsellor={counsellor}
+                  isCounsellor={isCounsellor}
+                  onChat={handleChatButtonClick}
+                />
+              </div>
+            ))
+            : (
+              <div style={empty.wrap}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+                <div style={empty.title}>No counsellors found</div>
+                <div style={empty.sub}>Try adjusting your search or filters.</div>
+                {hasFilters && (
+                  <button
+                    style={empty.resetBtn}
+                    onClick={() => { setSearch(""); setFieldFilter(""); setRatingFilter(""); }}
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            )
+          }
+        </div>
+      </div>
+
+      {/* Modals */}
       {modal === 'pending' && (
         <PendingCounsellorModal
           onCancel={handleKeepRequest}
@@ -286,7 +486,6 @@ export default function AskCounsellor() {
         />
       )}
 
-      {/* Student profile gate */}
       {modal === 'gate' && (
         <ProfileGateModal
           onSave={handleGateSave}
@@ -306,6 +505,48 @@ export default function AskCounsellor() {
     </main>
   );
 }
+
+// ── Hero styles ──
+
+const hero = {
+  wrap: {
+    background: "linear-gradient(135deg, #1a237e 0%, #3949ab 60%, #7c4dff 100%)",
+    padding: "48px 20px 56px",
+    textAlign: "center",
+    marginBottom: 32,
+    clipPath: "polygon(0 0, 100% 0, 100% 85%, 0 100%)",
+  },
+  inner: { maxWidth: 640, margin: "0 auto" },
+  title: {
+    fontSize: "clamp(22px, 4vw, 34px)", fontWeight: 800, color: "#fff",
+    fontFamily: "var(--fontHeading)", marginBottom: 10, letterSpacing: -0.5,
+  },
+  sub: {
+    fontSize: 15, color: "rgba(255,255,255,0.82)", fontFamily: "var(--fontHeading)",
+    lineHeight: 1.6, marginBottom: 24,
+  },
+  statsRow: {
+    display: "flex", justifyContent: "center", alignItems: "center",
+    gap: 0, background: "rgba(255,255,255,0.12)", borderRadius: 14,
+    padding: "14px 24px", display: "inline-flex",
+  },
+  stat: { display: "flex", flexDirection: "column", alignItems: "center", padding: "0 20px" },
+  statNum: { fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1 },
+  statLabel: { fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 2, fontFamily: "var(--fontHeading)", textTransform: "uppercase", letterSpacing: 0.5 },
+  statDivider: { width: 1, height: 36, background: "rgba(255,255,255,0.3)" },
+};
+
+// ── Empty state styles ──
+const empty = {
+  wrap: { textAlign: "center", padding: "60px 20px", width: "100%" },
+  title: { fontSize: 18, fontWeight: 700, color: "#444", fontFamily: "var(--fontHeading)", marginBottom: 6 },
+  sub: { fontSize: 14, color: "#999", fontFamily: "var(--fontHeading)", marginBottom: 20 },
+  resetBtn: {
+    background: "linear-gradient(135deg, #1a237e, #3949ab)", color: "#fff",
+    border: "none", borderRadius: 8, padding: "10px 22px",
+    fontSize: 14, fontFamily: "var(--fontHeading)", cursor: "pointer",
+  },
+};
 
 // ── Shared modal styles ──
 

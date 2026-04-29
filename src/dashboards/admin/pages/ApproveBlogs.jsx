@@ -1,377 +1,251 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import Button from '@mui/material/Button';
-import CounsellorsImage from "../../../assets/images/Dr. Samantha Williams_Image.jpg"
-import ApproveBlogsCSS from "../../../assets/styles/dashboards/admin_css/ApproveBlogs.module.css"
-import Modal from '@mui/material/Modal';
-import { Editor } from '@tinymce/tinymce-react';
-import Tooltip from '@mui/material/Tooltip';
-import JoditEditor from "jodit-react"
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from "react-redux";
-import { getUnapprovedBlogs, 
-          setRejectionReason, 
-          rejectBlog, 
-          handleChange, 
-          setSelectedBlog, 
-          handleConfirmDelete,
-          approveBlog} from '../../../features/dashboards/admin/approveBlogs/approveBlogsSlice';
+import {
+  getUnapprovedBlogs, setRejectionReason, rejectBlog,
+  handleChange, setSelectedBlog, handleConfirmDelete, approveBlog
+} from '../../../features/dashboards/admin/approveBlogs/approveBlogsSlice';
 
-
-
-const columns = [
-  { id: 'id', label: 'ID', minWidth: 50 },
-  { id: 'title', label: 'Blog Title', minWidth: 200 },
-  { id: 'author_name', label: 'Author Name', minWidth: 150 },
-  { id: 'created_at', label: 'Issue Date', minWidth: 150 },
-  { id: 'actions', label: 'Actions', minWidth: 150 },
-];
-
-
-export default function ApproveBlogs() {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [openModal, setOpenModal] = useState(false);
-  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
-  const [openApproveModal, setApproveOpenModal] = useState(false);
-  const editorRef = useRef(null);
-  const [openImageModal, setOpenImageModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState('');
-  const editor = React.useRef(null)
-
-  const {rows, rejectionReason, selectedBlog} =  useSelector((state) => state.approveBlogs);
-  const dispatch = useDispatch()
-
-  useEffect(() => {
-    return () => {
-      dispatch(getUnapprovedBlogs())
-    }
-  }, [dispatch])
-
-  const handleOpenModal = (row) => {
-    setSelectedBlog(row);
-    setOpenModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setOpenModal(false);
-  };
-
-  const handleDeleteBlog = (row) => {
-    setSelectedBlog(row);
-    setDeleteConfirmationOpen(true);
-  };
-
-  const handleCancelDelete = () => {
-    // Close delete confirmation modal without deleting
-    setDeleteConfirmationOpen(false);
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
-
-  const handleApprovalToggle = () => {
-    setApproveOpenModal(true)
-  };
-  const handleApproveClose = () => {
-    setApproveOpenModal(false);
-  };
-
-  const sendMessage = (data) =>
-  {
-   if (editorRef.current) {
-          console.log(editorRef.current.getContent());
-        }
-        setApproveOpenModal(false);
-  }
-
-  const filteredRows = rows.filter((row) =>
-    Object.values(row).some(
-      (value) =>
-        typeof value === 'string' &&
-        value.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
-  const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl);
-    setOpenImageModal(true);
-  };
-
-  const handleCloseImageModal = () => {
-    setOpenImageModal(false);
-    setSelectedImage('');
-  };
+function Modal({ open, onClose, children }) {
+  if (!open) return null;
   return (
-    
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-      <TextField
-        label="Search"
-        variant="outlined"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        style={{ margin: '20px' }}
-      />
-      <TableContainer sx={{ maxHeight: 440 }}>
-        <Table stickyHeader aria-label="sticky table">
-          {/* Table Header */}
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align="center"
-                  style={{ minWidth: column.minWidth, fontWeight: "bold", fontSize: 17 }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-
-          {/* Table Body */}
-          <TableBody>
-            {filteredRows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => (
-                <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                  {columns.map((column) => {
-                    return (
-                      <TableCell key={column.id} align="center">
-                        {column.id === 'actions' ? (
-                          <>
-                          <Tooltip title = "View Detail of Blog">
-                            <i
-                              className={`fa fa-eye ${ApproveBlogsCSS.icon} ${ApproveBlogsCSS['icon-eye']}`}
-                              aria-hidden="true"
-                              onClick={() => 
-                                {
-                                  dispatch(setSelectedBlog(row))
-                                  handleOpenModal(row)
-                                }}
-                            ></i>
-                            </Tooltip>
-                            <Tooltip title = "Reject Blog">
-                            <i
-                              className={`fa-solid fa-times mx-2 ${ApproveBlogsCSS.icon} ${ApproveBlogsCSS['icon-trash']}`}
-                              aria-hidden="true"
-                           
-                              onClick={() => 
-                                {
-                                  dispatch(setSelectedBlog(row))
-                                  handleDeleteBlog(row)
-                                }}
-                            ></i>
-                            </Tooltip>
-                            <Tooltip title = "Approve Blog">
-                            <i
-                              className={`fa-solid fa-check ${ApproveBlogsCSS.icon} ${ApproveBlogsCSS['icon-approval']}`}
-                              onClick={() => 
-                                {
-                                  dispatch(setSelectedBlog(row))
-                                  handleApprovalToggle()
-                                }}
-                            ></i>
-                            </Tooltip>
-                          </>
-                        ) : (
-                          row[column.id]
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      {/* Table Pagination */}
-      <TablePagination
-        rowsPerPageOptions={[10, 25, 100]}
-        component="div"
-        count={filteredRows.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
-
-      {/* Blog Details Modal */}
-      <Dialog open={openModal} onClose={handleCloseModal}>
-        <DialogTitle>Blog Detail</DialogTitle>
-        <DialogContent>
-          {selectedBlog && (
-            <div>
-              <p><strong>Title: </strong> {selectedBlog.title}</p>
-              <p><strong>Author Name: </strong>{selectedBlog.author_name}</p>
-              <p><strong>Issue Date: </strong> {selectedBlog.created_at}</p>
-              <img  className={ApproveBlogsCSS.certImage} src={`../../../../../career_counselling_portal/Counsellors/${selectedBlog.counsellor_email}/Blogs/${selectedBlog.cover_image}`} alt="Blog Image" 
-                  onClick={() => handleImageClick(`../../../../../career_counselling_portal/Counsellors/${selectedBlog.counsellor_email}/Blogs/${selectedBlog.cover_image}`)}/>
-              <p style = {{marginTop: 20}} dangerouslySetInnerHTML={{ __html: selectedBlog.description }}></p>
-            </div>
-          )}
-          <Button onClick={handleCloseModal}
-            style={{
-              marginTop: '10px',
-              padding: '8px 16px',
-              cursor: 'pointer',
-              borderRadius: '4px',
-              backgroundColor: '#741ac2',
-              color: '#fff',
-              border: '1px solid yellowgreen',
-              fontSize: '16px',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              transition: 'background-color 0.3s ease, transform 0.3s ease',
-            }}>Close</Button>
-        </DialogContent>
-      </Dialog>
-      {/* Modal for Image */}
-      <Modal
-      open={openImageModal}
-      onClose={handleCloseImageModal}
-      aria-labelledby="image-modal-title"
-      aria-describedby="image-modal-description"
-    >
-      <div className={ApproveBlogsCSS.imageModalContainer}>
-        <div className={ApproveBlogsCSS.imageModalContent}>
-          <img src={selectedImage} alt="Enlarged Image" className={ApproveBlogsCSS.enlargedImage} />
-        </div>
-        <button onClick={handleCloseImageModal} className={ApproveBlogsCSS.closeButton}>
-          Close
-        </button>
-      </div>
-    </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Dialog open={deleteConfirmationOpen} onClose={handleCancelDelete}>
-        <DialogTitle>Delete Confirmation</DialogTitle>
-        <DialogContent>
-          {selectedBlog && (
-            <div>
-              <p>Are you sure you want to delete this blog?</p>
-              <p><strong>ID:</strong> {selectedBlog.id}</p>
-              <p><strong>Blog Title: </strong>{selectedBlog.title}</p>
-              
-              {/* rejection reason module */}
-            </div>
-          )}
-
-          <Button 
-              onClick={() => 
-                {
-                  dispatch(
-                    setSelectedBlog(selectedBlog.id)
-                  )
-                  dispatch(
-                    handleConfirmDelete()
-                  )
-                  handleCancelDelete()
-                  dispatch(
-                    rejectBlog({blog_id: selectedBlog.id, counsellor_email: selectedBlog.counsellor_email})
-                  )
-                }} 
-              style={{
-              margin: '10px',
-              padding: '8px 16px',
-              cursor: 'pointer',
-              borderRadius: '4px',
-              backgroundColor: '#e00',
-              color: '#fff',
-              border: '1px solid #e00',
-              fontSize: '16px',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              transition: 'background-color 0.3s ease, transform 0.3s ease',
-            }}>Delete</Button>
-          <Button onClick={handleCancelDelete}style={{
-              margin: '10px',
-              padding: '8px 16px',
-              cursor: 'pointer',
-              borderRadius: '4px',
-              backgroundColor: '#741ac2',
-              color: '#fff',
-              border: '1px solid yellowgreen',
-              fontSize: '16px',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              transition: 'background-color 0.3s ease, transform 0.3s ease',
-            }}>Cancel</Button>
-        </DialogContent>
-      </Dialog>
-
-       {/*for Approval or Rejection Modal*/ }
-       <Modal
-  open={openApproveModal}
-  onClose={handleApproveClose}
-  aria-labelledby="modal-modal-title1"
-  aria-describedby="modal-modal-description1"
->
-  {/* The modal content */}
-  <div className={ApproveBlogsCSS.modalContainer}>
-    {selectedBlog && (
-      <div className={ApproveBlogsCSS.modalContent}>
-        <h2>Do you want  to approve this blog?</h2>
-        <p>Blog Title: <strong>{selectedBlog.title}</strong></p>
-        <p>Author Name: {selectedBlog.author_name}</p>
-        
-        <div>
-          {/* <Editor
-              onInit={(evt, editor) => editorRef.current = editor}
-              apiKey='c6i2i2x2pk5zi9xvmylesgph4u0kzmxzdg51sr03dhgjzskp'
-         init={{
-           height: 200,
-           menubar: false,
-           plugins: [
-             'advlist autolink lists link image charmap print preview anchor',
-             'searchreplace visualblocks code fullscreen',
-             'insertdatetime media table paste code help wordcount'
-           ],
-           toolbar: 'undo redo | formatselect | ' +
-           'bold italic backcolor | alignleft aligncenter ' +
-           'alignright alignjustify | bullist numlist outdent indent | ' +
-           'removeformat | help',
-           content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-         }}
-       /> */}
-        </div>
-        <div className={ApproveBlogs.modalActions}>
-          <button onClick={handleApproveClose} className= {ApproveBlogsCSS.buttonStyle}>Close</button>
-          <button onClick={() =>{
-                    dispatch(
-                      setSelectedBlog(selectedBlog.id)
-                    )
-                    dispatch(
-                      handleConfirmDelete()
-                    )
-                    handleApproveClose()
-                    dispatch(
-                      approveBlog({blog_id: selectedBlog.id})
-                    )
-                  }
-                }
-                  className= {`${ApproveBlogsCSS.buttonStyle} mx-2`} >
-              Approve
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
-</Modal>
-
-    </Paper>
+    <div style={s.overlay} onClick={onClose}>
+      <div style={s.modal} onClick={e => e.stopPropagation()}>{children}</div>
+    </div>
   );
 }
+
+function Badge({ approved }) {
+  return (
+    <span style={{ ...s.badge, ...(approved ? { background: '#d1fae5', color: '#065f46' } : { background: '#fef3c7', color: '#92400e' }) }}>
+      {approved ? 'Approved' : 'Pending'}
+    </span>
+  );
+}
+
+export default function ApproveBlogs() {
+  const dispatch = useDispatch();
+  const { rows, selectedBlog } = useSelector(state => state.approveBlogs);
+
+  const [search, setSearch]           = useState('');
+  const [viewModal, setViewModal]     = useState(false);
+  const [rejectModal, setRejectModal] = useState(false);
+  const [approveModal, setApproveModal] = useState(false);
+  const [page, setPage]               = useState(0);
+  const PAGE_SIZE = 8;
+
+  useEffect(() => { dispatch(getUnapprovedBlogs()); }, [dispatch]);
+
+  const filtered = (rows || []).filter(r =>
+    [r.title, r.author_name].some(v => v?.toLowerCase().includes(search.toLowerCase()))
+  );
+  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+
+  return (
+    <div style={s.page}>
+      {/* Banner */}
+      <div style={s.banner}>
+        <div>
+          <div style={s.bannerTitle}>
+            <i className="fas fa-blog" style={{ marginRight: 10 }} />
+            Approve Blogs
+          </div>
+          <div style={s.bannerSub}>{filtered.length} blog{filtered.length !== 1 ? 's' : ''} pending review</div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div style={s.toolbar}>
+        <div style={s.searchWrap}>
+          <i className="fas fa-search" style={s.searchIcon} />
+          <input
+            style={s.searchInput}
+            placeholder="Search by title or author…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(0); }}
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={s.tableWrap}>
+        <table style={s.table}>
+          <thead>
+            <tr>
+              {['#', 'Title', 'Author', 'Date', 'Status', 'Actions'].map(h => (
+                <th key={h} style={s.th}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {paged.length === 0 ? (
+              <tr><td colSpan={6} style={s.empty}>No blogs found</td></tr>
+            ) : paged.map((row, i) => (
+              <tr key={row.id} style={s.tr}>
+                <td style={s.td}>{page * PAGE_SIZE + i + 1}</td>
+                <td style={{ ...s.td, fontWeight: 600, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.title}</td>
+                <td style={s.td}>{row.author_name}</td>
+                <td style={s.td}>{row.created_at}</td>
+                <td style={s.td}><Badge approved={row.is_approved} /></td>
+                <td style={s.td}>
+                  <div style={s.actions}>
+                    <button style={s.btnIcon} title="View" onClick={() => { dispatch(setSelectedBlog(row)); setViewModal(true); }}>
+                      <i className="fa fa-eye" />
+                    </button>
+                    <button style={{ ...s.btnIcon, color: '#10b981' }} title="Approve" onClick={() => { dispatch(setSelectedBlog(row)); setApproveModal(true); }}>
+                      <i className="fa-solid fa-check" />
+                    </button>
+                    <button style={{ ...s.btnIcon, color: '#ef4444' }} title="Reject" onClick={() => { dispatch(setSelectedBlog(row)); setRejectModal(true); }}>
+                      <i className="fa-solid fa-times" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={s.pagination}>
+          <button style={s.pageBtn} disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+            <i className="fa-solid fa-chevron-left" />
+          </button>
+          <span style={s.pageInfo}>Page {page + 1} of {totalPages}</span>
+          <button style={s.pageBtn} disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+            <i className="fa-solid fa-chevron-right" />
+          </button>
+        </div>
+      )}
+
+      {/* View Modal */}
+      <Modal open={viewModal} onClose={() => setViewModal(false)}>
+        {selectedBlog && (
+          <>
+            <div style={s.modalHeader}>
+              <span style={s.modalTitle}>Blog Detail</span>
+              <button style={s.closeBtn} onClick={() => setViewModal(false)}><i className="fa-solid fa-xmark" /></button>
+            </div>
+            <div style={s.modalBody}>
+              <div style={s.detailRow}><span style={s.detailLabel}>Title</span><span style={s.detailVal}>{selectedBlog.title}</span></div>
+              <div style={s.detailRow}><span style={s.detailLabel}>Author</span><span style={s.detailVal}>{selectedBlog.author_name}</span></div>
+              <div style={s.detailRow}><span style={s.detailLabel}>Date</span><span style={s.detailVal}>{selectedBlog.created_at}</span></div>
+              {selectedBlog.counsellor_email && (
+                <img
+                  src={`../../../../../career_counselling_portal/Counsellors/${selectedBlog.counsellor_email}/Blogs/${selectedBlog.cover_image}`}
+                  alt="cover"
+                  style={{ width: '100%', borderRadius: 10, marginTop: 12, marginBottom: 12, objectFit: 'cover', maxHeight: 220 }}
+                />
+              )}
+              <div style={{ fontSize: 14, lineHeight: 1.7, color: '#444' }} dangerouslySetInnerHTML={{ __html: selectedBlog.description }} />
+            </div>
+            <div style={s.modalFooter}>
+              <button style={s.btnSecondary} onClick={() => setViewModal(false)}>Close</button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      {/* Approve Modal */}
+      <Modal open={approveModal} onClose={() => setApproveModal(false)}>
+        {selectedBlog && (
+          <>
+            <div style={s.modalHeader}>
+              <span style={s.modalTitle}>Approve Blog</span>
+              <button style={s.closeBtn} onClick={() => setApproveModal(false)}><i className="fa-solid fa-xmark" /></button>
+            </div>
+            <div style={s.modalBody}>
+              <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+                <i className="fa-solid fa-circle-check" style={{ fontSize: 44, color: '#10b981', marginBottom: 12 }} />
+                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Approve this blog?</div>
+                <div style={{ color: '#888', fontSize: 14 }}>{selectedBlog.title}</div>
+                <div style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>by {selectedBlog.author_name}</div>
+              </div>
+            </div>
+            <div style={s.modalFooter}>
+              <button style={s.btnSecondary} onClick={() => setApproveModal(false)}>Cancel</button>
+              <button style={s.btnSuccess} onClick={() => {
+                dispatch(setSelectedBlog(selectedBlog.id));
+                dispatch(handleConfirmDelete());
+                dispatch(approveBlog({ blog_id: selectedBlog.id }));
+                setApproveModal(false);
+              }}>Approve</button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      {/* Reject Modal */}
+      <Modal open={rejectModal} onClose={() => setRejectModal(false)}>
+        {selectedBlog && (
+          <>
+            <div style={s.modalHeader}>
+              <span style={s.modalTitle}>Reject Blog</span>
+              <button style={s.closeBtn} onClick={() => setRejectModal(false)}><i className="fa-solid fa-xmark" /></button>
+            </div>
+            <div style={s.modalBody}>
+              <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+                <i className="fa-solid fa-circle-xmark" style={{ fontSize: 44, color: '#ef4444', marginBottom: 12 }} />
+                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Reject this blog?</div>
+                <div style={{ color: '#888', fontSize: 14 }}>{selectedBlog.title}</div>
+                <div style={{ color: '#aaa', fontSize: 12, marginTop: 4 }}>This action cannot be undone.</div>
+              </div>
+            </div>
+            <div style={s.modalFooter}>
+              <button style={s.btnSecondary} onClick={() => setRejectModal(false)}>Cancel</button>
+              <button style={s.btnDanger} onClick={() => {
+                dispatch(setSelectedBlog(selectedBlog.id));
+                dispatch(handleConfirmDelete());
+                dispatch(rejectBlog({ blog_id: selectedBlog.id, counsellor_email: selectedBlog.counsellor_email }));
+                setRejectModal(false);
+              }}>Reject</button>
+            </div>
+          </>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+const s = {
+  page:       { padding: '28px 32px', fontFamily: 'var(--fontHeading)', maxWidth: 1100, margin: '0 auto' },
+  banner:     { background: 'linear-gradient(135deg,#1a237e,#4a148c)', borderRadius: 16, padding: '22px 28px', color: '#fff', marginBottom: 24, boxShadow: '0 8px 32px rgba(26,35,126,0.2)' },
+  bannerTitle:{ fontSize: 20, fontWeight: 800 },
+  bannerSub:  { fontSize: 13, opacity: 0.7, marginTop: 4 },
+
+  toolbar:    { display: 'flex', alignItems: 'center', marginBottom: 18, gap: 12 },
+  searchWrap: { position: 'relative', flex: 1, maxWidth: 360 },
+  searchIcon: { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa', fontSize: 14 },
+  searchInput:{ width: '100%', padding: '9px 12px 9px 34px', borderRadius: 10, border: '1.5px solid #e8eaf6', fontSize: 14, fontFamily: 'var(--fontHeading)', outline: 'none', background: '#fff', boxSizing: 'border-box' },
+
+  tableWrap:  { background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #f0f0f8', overflow: 'hidden' },
+  table:      { width: '100%', borderCollapse: 'collapse' },
+  th:         { padding: '13px 16px', fontSize: 12, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '1px solid #f0f0f8', textAlign: 'left', background: '#fafbff' },
+  tr:         { borderBottom: '1px solid #f7f7fc', transition: 'background 0.12s' },
+  td:         { padding: '13px 16px', fontSize: 13.5, color: '#333', verticalAlign: 'middle' },
+  empty:      { padding: '40px', textAlign: 'center', color: '#bbb', fontSize: 14 },
+
+  badge:      { padding: '3px 10px', borderRadius: 99, fontSize: 12, fontWeight: 600 },
+  actions:    { display: 'flex', gap: 8 },
+  btnIcon:    { background: '#f5f5ff', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#5c35be', transition: 'background 0.15s' },
+
+  pagination: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 20 },
+  pageBtn:    { background: '#fff', border: '1.5px solid #e8eaf6', borderRadius: 8, width: 34, height: 34, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  pageInfo:   { fontSize: 13, color: '#888', fontWeight: 600 },
+
+  overlay:    { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  modal:      { background: '#fff', borderRadius: 16, width: '90%', maxWidth: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
+  modalHeader:{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #f0f0f8', flexShrink: 0 },
+  modalTitle: { fontWeight: 800, fontSize: 15, color: '#1a1a2e' },
+  closeBtn:   { background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#aaa', lineHeight: 1, padding: 0 },
+  modalBody:  { padding: '20px', overflowY: 'auto', flex: 1 },
+  modalFooter:{ display: 'flex', gap: 10, justifyContent: 'flex-end', padding: '14px 20px', borderTop: '1px solid #f0f0f8', flexShrink: 0 },
+  detailRow:  { display: 'flex', gap: 12, marginBottom: 10, alignItems: 'flex-start' },
+  detailLabel:{ fontSize: 12, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', minWidth: 60, paddingTop: 2 },
+  detailVal:  { fontSize: 14, color: '#333', flex: 1 },
+
+  btnSecondary:{ padding: '8px 20px', borderRadius: 9, border: '1.5px solid #e8eaf6', background: '#fff', cursor: 'pointer', fontFamily: 'var(--fontHeading)', fontSize: 13, fontWeight: 600 },
+  btnSuccess:  { padding: '8px 20px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--fontHeading)', fontSize: 13, fontWeight: 700 },
+  btnDanger:   { padding: '8px 20px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#ef4444,#dc2626)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--fontHeading)', fontSize: 13, fontWeight: 700 },
+};

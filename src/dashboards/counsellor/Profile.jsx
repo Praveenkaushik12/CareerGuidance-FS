@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import defaultAvatar from "../../assets/images/default_avatar.svg";
 import {
   MDBCol,
   MDBContainer,
@@ -46,7 +47,9 @@ export default function Profile() {
                   alt="avatar"
                   className="rounded-circle"
                   style={{ width: '200px' }}
-                  fluid />
+                  fluid
+                  onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = defaultAvatar; }}
+                />
                 <p className="text-muted mb-1">Counsellor</p>
                 <p className="text-muted mb-4">{counsellorProfileData['counsellor_id']['name']}</p>
               </MDBCardBody>
@@ -103,7 +106,13 @@ export default function Profile() {
                     <MDBCardText>Phone</MDBCardText>
                   </MDBCol>
                   <MDBCol sm="9">
-                    <MDBCardText className="text-muted">{counsellorProfileData['phone_no']}</MDBCardText>
+                    <MDBCardText className="text-muted">
+                      {(() => {
+                        const raw = counsellorProfileData['phone_no'] || ''
+                        const digits = raw.replace(/^\+\d{1,4}-/, '').replace(/\D/g, '').slice(0, 10)
+                        return digits ? `+91-${digits}` : '—'
+                      })()}
+                    </MDBCardText>
                   </MDBCol>
                 </MDBRow>
                 <hr />

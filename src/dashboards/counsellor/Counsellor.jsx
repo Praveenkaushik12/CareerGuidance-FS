@@ -7,6 +7,7 @@ import Divider from '@mui/material/Divider'
 import { logout } from "../../features/authentication/authenticationSlice"
 import { getCounsellorData } from "../../features/dashboards/counsellor/counsellorSlice"
 import CounsellorCSS from "../../assets/styles/dashboards/counsellor_css/Counsellor.module.css"
+import FloatingChatBubble from "../../components/FloatingChatBubble"
 import Pusher from "pusher-js"
 
 const NAV_ITEMS = [
@@ -35,6 +36,7 @@ export default function Counsellor() {
     const navigate = useNavigate()
     const { user_id } = useSelector((store) => store.authentication)
     const { name, email } = useSelector((store) => store.counsellor)
+    const { pathname } = useLocation()
     const [anchorEl, setAnchorEl] = React.useState(null)
     const open = Boolean(anchorEl)
 
@@ -118,6 +120,7 @@ export default function Counsellor() {
                     <Outlet />
                 </main>
             </div>
+            {location.pathname !== '/counsellor/counsellorChat' && <FloatingChatBubble />}
         </div>
     )
 }
