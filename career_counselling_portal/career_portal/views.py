@@ -1076,6 +1076,7 @@ def sendBirdWebHook(request):
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
    
 
+
 @csrf_exempt
 def sendMessage(request):
     if request.method == 'POST':
@@ -1121,14 +1122,12 @@ def getCounsellorConversations(request):
         user_id = request.session.get('user_id')
         if not user_id:
             return JsonResponse({'message': 'Not logged in'}, status=401)
-        # Find all unique users who have exchanged messages with this counsellor
         sent_to = Message.objects.filter(sender_id=user_id).values_list('receiver_id', flat=True)
         received_from = Message.objects.filter(receiver_id=user_id).values_list('sender_id', flat=True)
         partner_ids = set(list(sent_to) + list(received_from))
         partners = list(ACU.objects.filter(id__in=partner_ids).values(
             'id', 'name', 'email', 'school', 'stream', 'age', 'gender'
         ))
-        # Attach last_message_at, last_message, and unread_count per partner
         for p in partners:
             last_msg = Message.objects.filter(
                 Q(sender_id=user_id, receiver_id=p['id']) |
@@ -1136,11 +1135,9 @@ def getCounsellorConversations(request):
             ).order_by('-created_at').values('created_at', 'content').first()
             p['last_message_at'] = str(last_msg['created_at']) if last_msg else ''
             p['last_message'] = last_msg['content'] if last_msg else ''
-            # Count messages sent by this partner that the counsellor hasn't read yet
             p['unread_count'] = Message.objects.filter(
                 sender_id=p['id'], receiver_id=user_id, is_read=False
             ).count()
-        # Sort by most recent message first
         partners.sort(key=lambda x: x['last_message_at'], reverse=True)
         return JsonResponse({'conversations': partners})
     return JsonResponse({'message': 'Method not allowed'}, status=405)

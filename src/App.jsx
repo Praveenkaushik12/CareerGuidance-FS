@@ -14,6 +14,7 @@ import Blogs from './pages/Blogs'
 import UserProfile from './pages/UserProfile'
 import OfferCounselling from "./pages/OfferCounselling"
 import CareerGPT from './pages/CareerGPT/CareerGPT'
+import MyChats from './pages/MyChats'
 import CareerExploration from './pages/CareerExploration'
 import ResourceHub from './pages/ResourceHub'
 import AuthenticateUser from './layouts/AuthenticateUser'
@@ -63,6 +64,7 @@ export default function App() {
 
             <Route element={<AuthenticateUser />} >
               <Route path="careerGPT" element={<CareerGPT />} />
+              <Route path="myChats" element={<MyChats />} />
             </Route>
 
             <Route path="login" element={<Login />} />
@@ -94,7 +96,7 @@ export default function App() {
               <Route path="addBlog/:id" element={<AddBlog />} />
               <Route path="showBlogs" element={<ShowBlogs />}/>
               <Route path="showBlogs/:id" element={<BlogDetail />}/>
-              <Route path='counsellorChat' element= {< CounsellorChat/>}/>
+              <Route path='counsellorChat' element={<CounsellorChat />}/>
             </Route>
           </Route>
         </Routes>  

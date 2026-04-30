@@ -5,6 +5,7 @@ import { setNotificationData } from "../features/header/headerSlice"
 import { logout, authenticate } from "../features/authentication/authenticationSlice"
 import { useDispatch, useSelector } from "react-redux"
 import React from "react"
+import useUnreadMessages from "../hooks/useUnreadMessages"
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Divider from '@mui/material/Divider'
@@ -57,6 +58,7 @@ export default function Header() {
         navigate('/')
     }
 
+    const hasUnreadChat = useUnreadMessages(is_exist && role === 'U')
     const isCounsellor = role === 'C' || (role === 'B' && counsellor_approved)
     const isPendingCounsellor = role === 'B' && !counsellor_approved
     const dashboardPath = role === 'A' ? '/admin/dashboard' : '/counsellor'
@@ -137,6 +139,7 @@ export default function Header() {
                             {/* Avatar dropdown — logged-in users */}
                             {is_exist && (
                                 <li className="nav-item" style={{ display: 'flex', alignItems: 'center', margin: '0 4px' }}>
+                                    <div style={{ position: 'relative', display: 'inline-flex' }}>
                                     <button
                                         className={HeaderCSS.avatarBtn}
                                         onClick={handleProfileMenuOpen}
@@ -147,6 +150,15 @@ export default function Header() {
                                     >
                                         {avatarLetter}
                                     </button>
+                                    {hasUnreadChat && (
+                                        <span style={{
+                                            position: 'absolute', top: 0, right: 0,
+                                            width: 9, height: 9, borderRadius: '50%',
+                                            background: '#e53935', border: '2px solid #fff',
+                                            pointerEvents: 'none',
+                                        }} />
+                                    )}
+                                    </div>
                                     <Menu
                                         id="profile-menu"
                                         anchorEl={profileMenu}
@@ -169,6 +181,15 @@ export default function Header() {
                                             <i className="fa-solid fa-user" style={{ color: '#3949ab', width: 16 }}></i>
                                             Profile
                                         </MenuItem>
+                                        {role === 'U' && (
+                                            <MenuItem
+                                                onClick={() => { handleProfileMenuClose(); setMenuOpen(false); navigate('/myChats') }}
+                                                style={{ fontFamily: "var(--fontHeading)", fontSize: 14, gap: 10 }}
+                                            >
+                                                <i className="fa-solid fa-comments" style={{ color: '#3949ab', width: 16 }}></i>
+                                                My Chats
+                                            </MenuItem>
+                                        )}
                                         <Divider />
                                         <MenuItem
                                             onClick={handleLogout}

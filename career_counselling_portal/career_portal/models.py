@@ -89,6 +89,7 @@ class Blogs(models.Model):
         return f'The title for the blog of counsellor {self.counsellor_id} is {self.title}'
     
 
+
 class Message(models.Model):
     sender = models.ForeignKey(ACU, on_delete=models.CASCADE, related_name='sent_messages')
     receiver = models.ForeignKey(ACU, on_delete=models.CASCADE, related_name='received_messages')

@@ -6,6 +6,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Divider from '@mui/material/Divider'
 import { logout } from "../../features/authentication/authenticationSlice"
 import { getCounsellorData } from "../../features/dashboards/counsellor/counsellorSlice"
+import useUnreadMessages from "../../hooks/useUnreadMessages"
 import CounsellorCSS from "../../assets/styles/dashboards/counsellor_css/Counsellor.module.css"
 import FloatingChatBubble from "../../components/FloatingChatBubble"
 import Pusher from "pusher-js"
@@ -14,8 +15,8 @@ const NAV_ITEMS = [
     { label: 'Dashboard', icon: 'fas fa-gauge-high', to: '/counsellor' },
     { label: 'Add Blog',  icon: 'fa-solid fa-pen-to-square', to: '/counsellor/addBlog' },
     { label: 'My Blogs',  icon: 'fa fa-sticky-note', to: '/counsellor/showBlogs' },
-    { label: 'Chat',      icon: 'fas fa-comment-dots', to: '/counsellor/counsellorChat' },
 ]
+const CHAT_ITEM = { label: 'Chat', icon: 'fas fa-comment-dots', to: '/counsellor/counsellorChat' }
 
 function NavLink({ to, icon, label, exact }) {
     const { pathname } = useLocation()
@@ -41,6 +42,7 @@ export default function Counsellor() {
     const open = Boolean(anchorEl)
 
     const avatarLetter = (name || email || 'C').charAt(0).toUpperCase()
+    const hasUnreadChat = useUnreadMessages(!!user_id)
 
     React.useEffect(() => {
         dispatch(getCounsellorData())
@@ -77,9 +79,19 @@ export default function Counsellor() {
                     <Link to="/" className={CounsellorCSS.homeLink} title="Go to site">
                         <i className="fa fa-home"></i>
                     </Link>
-                    <button className={CounsellorCSS.avatarBtn} onClick={handleOpen} aria-label="User menu">
-                        {avatarLetter}
-                    </button>
+                    <div style={{ position: 'relative', display: 'inline-flex' }}>
+                        <button className={CounsellorCSS.avatarBtn} onClick={handleOpen} aria-label="User menu">
+                            {avatarLetter}
+                        </button>
+                        {hasUnreadChat && (
+                            <span style={{
+                                position: 'absolute', top: 0, right: 0,
+                                width: 9, height: 9, borderRadius: '50%',
+                                background: '#e53935', border: '2px solid #4a148c',
+                                pointerEvents: 'none',
+                            }} />
+                        )}
+                    </div>
                     <Menu
                         anchorEl={anchorEl}
                         open={open}
@@ -114,6 +126,17 @@ export default function Counsellor() {
                         {NAV_ITEMS.map(item => (
                             <NavLink key={item.to} {...item} exact={item.to === '/counsellor'} />
                         ))}
+                        <div style={{ position: 'relative' }}>
+                            <NavLink {...CHAT_ITEM} />
+                            {hasUnreadChat && (
+                                <span style={{
+                                    position: 'absolute', top: 10, right: 12,
+                                    width: 9, height: 9, borderRadius: '50%',
+                                    background: '#e53935', border: '2px solid #4a148c',
+                                    pointerEvents: 'none',
+                                }} />
+                            )}
+                        </div>
                     </nav>
                 </aside>
                 <main className={CounsellorCSS.content}>

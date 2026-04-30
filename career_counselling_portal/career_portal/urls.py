@@ -80,7 +80,7 @@ urlpatterns = [
 
     path('askGemini/',views.ask_gemini,name='askGemini'),
 
-    # Direct messaging between student and counsellor
+    # Messaging
     path('sendMessage', views.sendMessage, name='sendMessage'),
     path('getMessages', views.getMessages, name='getMessages'),
     path('getCounsellorConversations', views.getCounsellorConversations, name='getCounsellorConversations'),
