@@ -19,8 +19,11 @@ from .Utils.sendbird import createUser, createChannel, getUser
 import hmac
 import hashlib
 from .config.config import pusher_client
-
 from .Utils.counsellor import makeDirectoy, saveImage, deleteImage, removeDirectory
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Send OTP
 def generate_otp():
@@ -562,10 +565,15 @@ def saveHistory(request):
 def getHistory(request):
     if request.method == 'GET':
         uid = request.session.get('user_id')
-        acuInstance = ACU.objects.get(id=uid)
-        history = CareerGPTHistory.objects.filter(user_id=acuInstance)
-        serializedData = CareerGPTHistorySerializer(history, many=True)
-        return JsonResponse({'history': serializedData.data})
+        if not uid:
+            return JsonResponse({'history': []})
+        try:
+            acuInstance = ACU.objects.get(id=uid)
+            history = CareerGPTHistory.objects.filter(user_id=acuInstance)
+            serializedData = CareerGPTHistorySerializer(history, many=True)
+            return JsonResponse({'history': serializedData.data})
+        except ACU.DoesNotExist:
+            return JsonResponse({'history': []})
     else:
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
@@ -1262,76 +1270,101 @@ def cancelCounsellorRequest(request):
 
 
 @csrf_exempt
-def ask_gemini(request):
-    if request.method == "POST":
+def ask_gemini(request): 
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"}, status=400)
+
+    try:
         data = json.loads(request.body)
-        headers = {"Content-Type": "application/json"}
-        api_key = "AIzaSyDeWeOqAIvzJTdfMvPu8a57gTDQdJ0d2-Y"
+        user_message = data["contents"][0]["parts"][0]["text"]
 
-        print("[CareerGPT] Request received. Payload:", json.dumps(data)[:200])
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [
+                    {"role": "user", "content": user_message}
+                ]
+            },
+            timeout=30
+        )
 
-        # Try multiple models in case one has exhausted its quota
-        models = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
-        response = None
+        print("GROQ STATUS:", response.status_code)
 
-        for model in models:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-            print(f"[CareerGPT] Trying model: {model}")
-            response = requests.post(url, headers=headers, json=data)
-            print(f"[CareerGPT] {model} -> status {response.status_code}")
-            if response.status_code == 200:
-                resp_json = response.json()
-                text = resp_json.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
-                print(f"[CareerGPT] Success. Response text: {text[:100]}")
-                return JsonResponse(resp_json, status=200)
-            else:
-                print(f"[CareerGPT] {model} failed: {response.text[:200]}")
+        result = response.json()
+        print("FULL GROQ RESPONSE:", result)
 
-        print(f"[CareerGPT] All models failed. Last response: {response.text[:300]}")
-        return JsonResponse(response.json(), status=response.status_code)
+        if response.status_code != 200 or "choices" not in result:
+            error_msg = result.get("error", {}).get("message", "Unknown error")
+            return JsonResponse({
+                "candidates": [{
+                    "content": {
+                        "parts": [{"text": f"⚠️ API Error: {error_msg}"}]
+                    }
+                }]
+            })
 
+        bot_text = result["choices"][0]["message"]["content"]
 
-def _call_gemini(prompt, tag="Gemini"):
-    """Shared helper: tries multiple Gemini models, returns (text, None) or (None, error_str)."""
-    api_key = "AIzaSyDeWeOqAIvzJTdfMvPu8a57gTDQdJ0d2-Y"
-    headers  = {"Content-Type": "application/json"}
-    payload  = {"contents": [{"parts": [{"text": prompt}]}]}
-    models   = [
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-8b",
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite",
-    ]
-    last_error = "No models attempted"
-    for model in models:
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-            print(f"[{tag}] Trying model: {model}")
-            resp = requests.post(url, headers=headers, json=payload, timeout=30)
-            print(f"[{tag}] {model} -> HTTP {resp.status_code}")
-            if resp.status_code == 200:
-                resp_json = resp.json()
-                text = (
-                    resp_json
-                    .get("candidates", [{}])[0]
-                    .get("content", {})
-                    .get("parts", [{}])[0]
-                    .get("text", "")
-                )
-                if text.strip():
-                    print(f"[{tag}] Success with {model} ({len(text)} chars)")
-                    return text.strip(), None
-                else:
-                    last_error = f"{model}: empty text in response"
-                    print(f"[{tag}] {last_error}. Full resp: {resp_json}")
-            else:
-                last_error = f"{model}: HTTP {resp.status_code} — {resp.text[:300]}"
-                print(f"[{tag}] {last_error}")
-        except Exception as exc:
-            last_error = f"{model}: exception — {exc}"
-            print(f"[{tag}] {last_error}")
-    return None, last_error
+        if not bot_text:
+            bot_text = "⚠️ Empty response from AI"
 
+        return JsonResponse({
+            "candidates": [{
+                "content": {
+                    "parts": [{"text": bot_text}]
+                }
+            }]
+        })
+
+    except Exception as e:
+        print("ERROR:", str(e))
+        return JsonResponse({"error": str(e)}, status=500)
+    
+def _call_gemini(prompt, tag="AI"):
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ]
+            },
+            timeout=30
+        )
+
+        print(f"[{tag}] Status:", response.status_code)
+
+        if response.status_code != 200:
+            return None, response.text
+
+        result = response.json()
+
+        if "choices" not in result:
+            return None, result.get("error", {}).get("message", "Unknown error")
+
+        text = result["choices"][0]["message"]["content"]
+
+        if not text:
+            return None, "Empty response from AI"
+
+        return text.strip(), None
+
+    except Exception as e:
+        return None, str(e)
 
 @csrf_exempt
 def generateAssessmentQuestions(request):
