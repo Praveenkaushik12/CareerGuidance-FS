@@ -11,7 +11,10 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -138,10 +141,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'noreplytestprofile@gmail.com'
-EMAIL_HOST_PASSWORD = 'pubh yype htsw halb'
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 
-SEND_BIRD_APP_ID = '70C4C4CC-A6BE-45C2-9263-21D45ECAFFE0'
-SEND_BIRD_API_TOKEN = 'a3b8b5d1ea55c1e6c7b174b5a4e3d09435344791'
-
+SEND_BIRD_APP_ID = os.getenv("SEND_BIRD_APP_ID")
+SEND_BIRD_API_TOKEN = os.getenv("SEND_BIRD_API_TOKEN")
